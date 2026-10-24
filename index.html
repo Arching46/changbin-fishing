@@ -3,6 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#06131e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="彰濱磯釣">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
 <title>彰濱磯釣</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -271,7 +279,7 @@ html.rot #app{right:auto;bottom:auto;left:0;top:0;width:var(--H,100vh);height:va
   <div id="labels"></div>
 
   <div class="top">
-    <div id="brand" class="brand"><h1>彰濱磯釣</h1><p>線西・崙尾・鹿港　海岸釣場　<span style="opacity:.6;letter-spacing:0">v20</span></p></div>
+    <div id="brand" class="brand"><h1>彰濱磯釣</h1><p>線西・崙尾・鹿港　海岸釣場　<span style="opacity:.6;letter-spacing:0">v21</span></p></div>
     <div id="where" class="where" hidden><h2 id="wName">—</h2><p id="wInfo">—</p></div>
     <div class="chips">
       <span class="chip money" id="cMoney">$0</span>
@@ -280,6 +288,7 @@ html.rot #app{right:auto;bottom:auto;left:0;top:0;width:var(--H,100vh);height:va
       <span class="chip" id="cWx">天氣</span>
       <button class="chip btn" id="cOn" data-open="friends">單人</button>
       <button class="chip btn" id="cSnd" aria-label="音效開關">音效 開</button>
+      <button class="chip btn" id="cFull" aria-label="全螢幕">全螢幕</button>
     </div>
   </div>
   <div id="feed"></div>
@@ -657,6 +666,9 @@ function renderSheet(){
   }else if(sheetKind==='friends'){
     head=banner('釣友','ONLINE・一起釣魚','看大家在哪個釣點、正在做什麼；喊話會出現在你頭上的名牌。');
     body=friendsView();
+  }else if(sheetKind==='install'){
+    head=banner('全螢幕玩','FULL SCREEN','去掉網址列和瀏覽器按鈕，整個畫面都給遊戲。');
+    body=installView();
   }else if(sheetKind==='help'){
     head=banner('玩法說明','HOW TO FISH','磯釣的節奏：配好釣組、看潮水、拋竿、盯浮標、揚竿、搏魚。');
     body=helpView();
@@ -1296,7 +1308,7 @@ function update3D(dt,t,e){
   P.fpk=clamp((P.fpk||0)+(fpOn?dt*1.6:-dt*2.2),0,1);const fk=P.fpk*P.fpk*(3-2*P.fpk);
   const ca=yaw,cf=fwd(ca),cr={x:-cf.z,z:cf.x};
   const tp=_v().set(base.x+cr.x*off.s-cf.x*off.b,base.y+off.u,base.z+cr.z*off.s-cf.z*off.b);
-  const eye=_v().set(base.x+cf.x*.12-cr.x*.05,base.y+1.66+Math.sin(t*1.1)*.012,base.z+cf.z*.12-cr.z*.05);
+  const eye=_v().set(base.x-cf.x*.25-cr.x*.42,base.y+1.78+Math.sin(t*1.1)*.012,base.z-cf.z*.25-cr.z*.42);
   const want=tp.lerp(eye,fk);
   let look=_v().set(base.x+cf.x*32,lvl-1,base.z+cf.z*32);
   if(F.st==='fight'&&end)look.lerp(end,.55+fk*.35);else if(end&&['sink','wait','bite','nibble','snag','retrieve','lurehit'].includes(F.st))look.lerp(end,.35+fk*.55);
@@ -1508,6 +1520,7 @@ $('#bChum').addEventListener('click',()=>{ac();toggleChum()});
 $('#cFloat').addEventListener('click',()=>{ac();chumToFloat()});$('#cMix').addEventListener('click',openChum);$('#cDone').addEventListener('click',()=>{CM.on=false;CM.ch=false});
 $('#bT').addEventListener('pointerdown',e=>{e.preventDefault();mend()});$('#bT').addEventListener('contextmenu',e=>e.preventDefault());
 $('#bMap').addEventListener('click',()=>{if(F.st==='fight'){toast('搏魚中不能離開');return}exitSpot()});
+$('#cFull').addEventListener('click',()=>{ac();goFull()});
 $('#cSnd').addEventListener('click',()=>{S.snd=!S.snd;$('#cSnd').textContent='音效 '+(S.snd?'開':'關');save();if(S.snd){ac();sfx('click')}});
 $('#uwT').addEventListener('click',()=>{const w=$('#uwWrap');w.classList.toggle('min');$('#uwT').textContent=w.classList.contains('min')?'＋':'−'});
 document.addEventListener('click',e=>{const o=e.target.closest('[data-open]');if(o){ac();if(o.dataset.open==='gear'){gearTab='rig';gearSlot=null}openSheet(o.dataset.open)}});
@@ -1586,7 +1599,7 @@ async function fbRoom(name){
   evRef.limitToLast(20).on('child_added',c=>{if(seen.has(c.key))return;seen.add(c.key);const v=c.val();if(!v||!v.topic)return;
     (handlers[v.topic]||[]).forEach(h=>{try{h({topic:v.topic,data:v.data,peer:v.peer,by:null,isMe:v.peer===myId,sameTab:v.peer===myId,kind:'viewer',guest:true})}catch(e){}})});
   const flush=()=>{pending=null;if(!mine.n)return;const j=JSON.stringify(mine);if(j===lastJSON)return;lastJSON=j;lastWrite=Date.now();
-    presRef.set(Object.assign({},mine,{at:firebase.database.ServerValue.TIMESTAMP})).then(()=>{window.__fbErr=''}).catch(err=>{lastJSON='';window.__fbErr=String((err&&(err.code||err.message))||err);console.warn('presence write failed',window.__fbErr,JSON.stringify(mine));if(!errShown){errShown=true;toast('多人資料寫入失敗（v20）：'+window.__fbErr+'｜欄位 '+Object.keys(mine).join(',')+'｜暱稱 '+String(mine.n||'').length+' 字',8000)}})};
+    presRef.set(Object.assign({},mine,{at:firebase.database.ServerValue.TIMESTAMP})).then(()=>{window.__fbErr=''}).catch(err=>{lastJSON='';window.__fbErr=String((err&&(err.code||err.message))||err);console.warn('presence write failed',window.__fbErr,JSON.stringify(mine));if(!errShown){errShown=true;toast('多人資料寫入失敗（v21）：'+window.__fbErr+'｜欄位 '+Object.keys(mine).join(',')+'｜暱稱 '+String(mine.n||'').length+' 字',8000)}})};
   db.ref('.info/connected').on('value',x=>{if(x.val()===true){presRef.onDisconnect().remove();lastJSON='';flush()}});
   setInterval(()=>{lastJSON='';flush()},10000);
   return{
@@ -1609,6 +1622,20 @@ async function fbRoom(name){
    ========================================================= */
 function resize(){const st=$('#stage'),w=st.clientWidth,h=st.clientHeight;if(R)R.setSize(w,h,false);
   if(G.map){G.map.cam.aspect=w/h;G.map.cam.updateProjectionMatrix()}if(G.spot){G.spot.cam.aspect=w/h;G.spot.cam.updateProjectionMatrix()}measureDock()}
+const isStandalone=()=>matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+function fullOK(){const de=document.documentElement;return !!(de.requestFullscreen||de.webkitRequestFullscreen)}
+function goFull(){const de=document.documentElement,inFull=document.fullscreenElement||document.webkitFullscreenElement;
+  if(inFull){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return}
+  const req=de.requestFullscreen||de.webkitRequestFullscreen;
+  if(!req){openSheet('install');return}
+  try{const r=req.call(de,{navigationUI:'hide'});const after=()=>{try{screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})}catch(e){}};if(r&&r.then)r.then(after).catch(()=>openSheet('install'));else after()}catch(e){openSheet('install')}}
+function fullChip(){const b=$('#cFull');if(!b)return;const inFull=document.fullscreenElement||document.webkitFullscreenElement;b.hidden=isStandalone();b.textContent=inFull?'離開全螢幕':'全螢幕'}
+document.addEventListener('fullscreenchange',()=>{fullChip();setTimeout(orient,200)});document.addEventListener('webkitfullscreenchange',()=>{fullChip();setTimeout(orient,200)});
+function installView(){const ios=/iPhone|iPad|iPod/.test(navigator.userAgent),inapp=/Line|FBAN|FBAV|Instagram|MicroMessenger/i.test(navigator.userAgent);
+  return `<div class="help">${inapp?'<div class="msgs"><div class="w">你現在是在 LINE、Facebook 之類的 App 內建瀏覽器，這種瀏覽器沒辦法全螢幕。請點右上角選單，選「用預設瀏覽器開啟」或「在 Safari／Chrome 中開啟」。</div></div>':''}
+  <h4>最推薦：加入主畫面</h4><p>加入後從主畫面的圖示打開，就像一個 App，沒有網址列和瀏覽器按鈕，整個畫面都是遊戲。</p>
+  ${ios?'<ul><li>用 <b>Safari</b> 打開遊戲網址</li><li>點下方的「分享」按鈕（方框加向上箭頭）</li><li>往下找「加入主畫面」，按「新增」</li><li>回到主畫面，點「彰濱磯釣」圖示開始玩</li></ul>':'<ul><li>用 <b>Chrome</b> 打開遊戲網址</li><li>點右上角「⋮」選單</li><li>選「加到主畫面」或「安裝應用程式」</li><li>回到主畫面，點「彰濱磯釣」圖示開始玩（會自動橫向全螢幕）</li></ul>'}
+  <h4>電腦</h4><p>按右上角的「全螢幕」或鍵盤 F11。</p></div>`}
 function orient(){const de=document.documentElement,touch=matchMedia('(pointer:coarse)').matches,rot=touch&&innerHeight>innerWidth&&S.land!==false;
   de.style.setProperty('--W',innerWidth+'px');de.style.setProperty('--H',innerHeight+'px');de.classList.toggle('rot',rot);resize()}
 window.addEventListener('resize',orient);window.addEventListener('orientationchange',()=>setTimeout(orient,250));
@@ -1634,7 +1661,7 @@ has3D=init3D();
 if(!has3D){$('#fallback').hidden=false;$('#fallback').textContent='這台裝置無法顯示 3D 地圖。仍可從下方選單逛釣具行、配釣組，並從釣點清單進入釣位。';
   const card=$('#spotCard');card.hidden=false;card.innerHTML=`<h3>選擇釣點</h3><div class="row2" style="flex-wrap:wrap">${SPOTS.map(s=>`<button class="ghost" data-go="${s.id}">${s.n}</button>`).join('')}</div>`;$('#mapHint').hidden=true}
 $('#cSnd').textContent='音效 '+(S.snd?'開':'關');
-orient();hud(env(),true);
+orient();fullChip();hud(env(),true);
 requestAnimationFrame(loop);
 </script>
 </body>
