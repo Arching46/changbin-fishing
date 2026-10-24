@@ -226,6 +226,31 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--tide);outline-o
 .walk.l{left:max(12px,env(safe-area-inset-left,0px))}
 .walk.r{right:max(12px,env(safe-area-inset-right,0px))}
 .walk.on{background:var(--raise);border-color:var(--tide)}
+html.rot #app{right:auto;bottom:auto;left:0;top:0;width:var(--H,100vh);height:var(--W,100vw);transform-origin:0 0;transform:rotate(90deg) translateY(-100%)}
+.spotDock .right{display:contents}
+.spotDock .stools{order:5}.spotDock .acts{order:10}
+@media (max-height:520px){
+  .top{padding-top:calc(env(safe-area-inset-top,0px) + 6px)}
+  .where{padding:6px 10px}.where h2{font-size:15px}.where p{font-size:10px}
+  .chip{padding:4px 8px;font-size:11px}
+  #feed{top:calc(env(safe-area-inset-top,0px) + 58px)}
+  .spotDock{flex-direction:row;align-items:flex-end;justify-content:space-between;gap:12px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px)}
+  .spotDock .right{display:flex;flex-direction:column;gap:6px;width:min(52%,460px);flex:none}
+  .spotDock .stools{order:0;max-width:44%;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .spotDock .stools .ibtn{height:44px;min-width:0;font-size:10px;padding:4px}
+  .spotDock .stools .ibtn svg{width:17px;height:17px}
+  .pbtn,.sbtn{height:56px}.pbtn{font-size:18px}
+  .meter{padding:6px 10px;gap:4px}.cbtn{height:42px}.status{font-size:12px;min-height:0}
+  #uwWrap{bottom:auto;top:calc(env(safe-area-inset-top,0px) + 74px);width:112px}#uw{height:118px}#uwWrap header{padding:3px 6px}
+  .walk{top:auto;bottom:calc(var(--dockH,150px) + 6px);width:50px;height:54px}
+  .walk.l{left:auto;right:calc(max(12px,env(safe-area-inset-right,0px)) + 62px)}
+  #aimHint{bottom:calc(var(--dockH,150px) + 70px)}
+  #toast{top:calc(env(safe-area-inset-top,0px) + 60px)}
+  #callout{top:40%;font-size:36px}
+  .sc{max-height:96%}.banner{padding-top:10px;padding-bottom:8px}.banner p{display:none}.banner h2{font-size:19px;margin:4px 0 0}
+  .mapDock .hint{display:none}.mapcard{padding:10px;gap:6px;max-width:480px}.mapcard p{display:none}
+  .mapDock .tools .ibtn{height:44px}
+}
 @media (min-width:760px){
   #sheet{align-items:center}
   .sc{width:min(760px,92vw);max-height:86%;border-radius:22px;border-bottom:1px solid var(--line)}
@@ -236,6 +261,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--tide);outline-o
   .mapDock{max-width:600px}
   .brand h1{font-size:32px}
 }
+@media (max-height:520px){#uwWrap{width:118px}#uw{height:112px}.spotDock .stools{grid-template-columns:repeat(6,1fr);max-width:46%}.spotDock .stools .ibtn{height:48px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -275,6 +301,14 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--tide);outline-o
   <div id="aimHint" hidden>按住 ◀ ▶ 沿堤走動・左右滑動畫面調整拋竿方向</div>
   <button class="walk l" id="wL" hidden aria-label="往左走">◀<small>往左</small></button><button class="walk r" id="wR" hidden aria-label="往右走">▶<small>往右</small></button>
   <div class="dock spotDock" id="spotDock" hidden>
+    <div class="tools stools">
+      <button class="ibtn" data-open="gear"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>裝備</button>
+      <button class="ibtn" data-open="shop"><svg viewBox="0 0 24 24"><path d="M3 10l2-5h14l2 5"/><path d="M4 10h16v10H4z"/><path d="M10 20v-5h4v5"/></svg>釣具行</button>
+      <button class="ibtn" data-open="basket"><svg viewBox="0 0 24 24"><path d="M3 11c3-5 15-5 18 0-3 5-15 5-18 0z"/><circle cx="16" cy="10.5" r=".8"/><path d="M3 11l-1.5-3M3 11l-1.5 3"/></svg><span>魚簍 <span class="n" id="nFish2">0</span></span></button>
+      <button class="ibtn" data-open="friends"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.5.1 4.4 1.6 5 4.3"/></svg><span>釣友 <span class="n" data-on>0</span></span></button><button class="ibtn" id="bChum"><svg viewBox="0 0 24 24"><path d="M5 14c0-4 3-7 7-7s7 3 7 7"/><path d="M4 14h16l-2 5H6z"/><circle cx="9" cy="5" r="1"/><circle cx="14" cy="4" r="1"/></svg><span>撒餌 <span class="n" id="nChum">0</span></span></button>
+      <button class="ibtn" id="bMap"><svg viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>地圖</button>
+    </div>
+    <div class="right">
     <div class="meter" id="powP" hidden><div class="mrow"><span>力道</span><div class="bar pow"><i id="powI"></i></div><span id="powV">0 m</span></div></div>
     <div class="meter" id="chumP" hidden><div class="mrow"><span>撒餌</span><div class="bar pow"><i id="cpI"></i></div><span id="cpV">0 m</span></div><div class="crow"><button class="cbtn hot" id="cThrow">撒出<small id="cThrowS">按住蓄力</small></button><button class="cbtn" id="cFloat">對準浮標<small>一鍵撒過去</small></button><button class="cbtn" id="cMix">調配<small>誘餌桶</small></button><button class="cbtn" id="cDone">完成<small>收起杓子</small></button></div></div>
     <div class="meter" id="slkP" hidden><div class="mrow"><span>母線弧度</span><div class="bar"><i id="slkI"></i></div><span id="slkV">0 m</span></div></div>
@@ -284,16 +318,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--tide);outline-o
       <div class="mrow"><span>魚體力</span><div class="bar"><i id="fSi" style="background:var(--amber)"></i></div><span id="fSv">100%</span></div>
     </div>
     <div class="status" id="status"></div>
-    <div class="tools">
-      <button class="ibtn" data-open="gear"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>裝備</button>
-      <button class="ibtn" data-open="shop"><svg viewBox="0 0 24 24"><path d="M3 10l2-5h14l2 5"/><path d="M4 10h16v10H4z"/><path d="M10 20v-5h4v5"/></svg>釣具行</button>
-      <button class="ibtn" data-open="basket"><svg viewBox="0 0 24 24"><path d="M3 11c3-5 15-5 18 0-3 5-15 5-18 0z"/><circle cx="16" cy="10.5" r=".8"/><path d="M3 11l-1.5-3M3 11l-1.5 3"/></svg><span>魚簍 <span class="n" id="nFish2">0</span></span></button>
-      <button class="ibtn" data-open="friends"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.5.1 4.4 1.6 5 4.3"/></svg><span>釣友 <span class="n" data-on>0</span></span></button><button class="ibtn" id="bChum"><svg viewBox="0 0 24 24"><path d="M5 14c0-4 3-7 7-7s7 3 7 7"/><path d="M4 14h16l-2 5H6z"/><circle cx="9" cy="5" r="1"/><circle cx="14" cy="4" r="1"/></svg><span>撒餌 <span class="n" id="nChum">0</span></span></button>
-      <button class="ibtn" id="bMap"><svg viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>地圖</button>
-    </div>
     <div class="acts">
       <button class="pbtn" id="bP"><span id="bPt">拋竿</span><small id="bPs">按住蓄力，放開拋出</small></button>
       <button class="sbtn" id="bT" hidden><span>理線</span><small id="bTs">收掉多餘的線</small></button><button class="sbtn" id="bS"><span id="bSt">收竿</span><small id="bSs"></small></button>
+    </div>
     </div>
   </div>
 
@@ -736,10 +764,11 @@ function invView(){
   }
   return h||`<div class="empty">物品欄沒有這類東西。<br>到「釣具行」購買後會出現在這裡。</div>`;
 }
+function viewToggles(){return `<div class="slider"><div class="lab"><b>拋竿後第一人稱</b><button class="ghost" data-fpv style="height:40px">${S.fpv!==false?'開':'關'}</button></div><p>浮標入水後鏡頭移到釣客眼睛的位置，盯著浮標看；收竿後回到背後視角。</p></div><div class="slider"><div class="lab"><b>手機自動橫向</b><button class="ghost" data-land style="height:40px">${S.land!==false?'開':'關'}</button></div><p>手機直拿時，畫面會自動轉成橫向顯示，把手機往左轉橫拿就好。</p></div>`}
 function tuneView(){
   const r=rig(), sp=CUR, e=env(), d=sp?Math.round((r.maxCast||30)*.7):30, dep=sp?depthAt(sp,d,e):null;
   const sl=(k,label,val,unit,min,max,step,p)=>`<div class="slider"><div class="lab"><b>${label}</b><span>${val}${unit}</span></div><div class="stp"><button data-step="${k}:-${step}" aria-label="減少">−</button><input type="range" id="rg_${k}" data-rg="${k}" min="${min}" max="${max}" step="${step}" value="${val}"><button data-step="${k}:${step}" aria-label="增加">＋</button></div><p>${p}</p></div>`;
-  return `<div class="slider"><div class="lab"><b>咬餌輔助</b><button class="ghost" data-assist style="height:40px">${S.assist?'開・有提示':'關・全靠自己'}</button></div><p>開：魚真正咬餌時跳出「揚竿！」、按鈕發亮並震動，水下視窗看得到魚影。關：沒有任何提示，只能自己盯浮標判斷，賣魚收入 +15%。</p></div>`+sl('tana','棚（浮標止到鉤的深度）',S.cfg.tana,' m',.5,12,.5,dep?`目前 ${sp.n} 拋 ${d}m 處水深約 ${f1(dep)}m。棚比水深深，鉛會躺在底部，消波塊區容易掛底。`:'進入釣位後會顯示拋投點的水深。黑鯛、石斑貼底；烏魚、臭肚在中上層。')+
+  return viewToggles()+`<div class="slider"><div class="lab"><b>咬餌輔助</b><button class="ghost" data-assist style="height:40px">${S.assist?'開・有提示':'關・全靠自己'}</button></div><p>開：魚真正咬餌時跳出「揚竿！」、按鈕發亮並震動，水下視窗看得到魚影。關：沒有任何提示，只能自己盯浮標判斷，賣魚收入 +15%。</p></div>`+sl('tana','棚（浮標止到鉤的深度）',S.cfg.tana,' m',.5,12,.5,dep?`目前 ${sp.n} 拋 ${d}m 處水深約 ${f1(dep)}m。棚比水深深，鉛會躺在底部，消波塊區容易掛底。`:'進入釣位後會顯示拋投點的水深。黑鯛、石斑貼底；烏魚、臭肚在中上層。')+
     sl('ll','子線長度',S.cfg.ll,' m',.5,5,.25,'子線越長餌越自然，但風浪大時不好控制；不能比棚長。斷線時會損失這段長度。')+
     sl('drag','煞車力（前煞車設定）',S.cfg.drag,' kg',.3,r.reel?r.reel.drag:4,.1,`建議設在線組強度 ${r.limit?f1(r.limit):'—'}kg 的 1/4–1/2。太緊會斷線，太鬆魚會鑽進障礙物。捲線器上限 ${r.reel?r.reel.drag:'—'}kg。`);
 }
@@ -806,6 +835,7 @@ vec3 R=reflect(-uSunDir,N);float sp=pow(max(dot(R,V),0.),140.);c+=uSun*sp*1.5;fl
 float d=length(cameraPosition-vW);gl_FragColor=vec4(mix(c,uFog,smoothstep(uFogN,uFogF,d)),1.);}`;
 const SV=`varying vec3 vD;void main(){vD=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
 const SF=`uniform vec3 uTop,uHor,uSunC,uSunDir;varying vec3 vD;void main(){float y=vD.y;vec3 c=mix(uHor,uTop,smoothstep(0.,.55,y));if(y<0.)c=uHor*.85;float s=max(dot(vD,uSunDir),0.);c+=uSunC*(pow(s,900.)*4.+pow(s,10.)*.35);gl_FragColor=vec4(c,1.);}`;
+const isPortrait=()=>{const st=document.getElementById('stage');return st?st.clientHeight>st.clientWidth:innerHeight>innerWidth};
 function waveH(x,z,t,a){return a*(Math.sin(x*.12+t*1.1)*.5+Math.sin(z*.17+t*1.4)*.35+Math.sin((x+z)*.33+t*2.3)*.15+Math.sin((x-z*.6)*.71+t*3.1)*.07)}
 function waterMat(){const T=THREE;return new T.ShaderMaterial({uniforms:{uT:{value:0},uAmp:{value:.3},uDeep:{value:new T.Color('#14393f')},uShal:{value:new T.Color('#4c7d70')},uSky:{value:new T.Color('#a9c9d6')},uSun:{value:new T.Color('#fff1cf')},uSunDir:{value:new T.Vector3(0,1,0)},uFog:{value:new T.Color('#a9c9d6')},uFogN:{value:300},uFogF:{value:3800},uFoam:{value:.4}},vertexShader:WV,fragmentShader:WF})}
 function skyMat(){const T=THREE;return new T.ShaderMaterial({uniforms:{uTop:{value:new T.Color('#2f74c9')},uHor:{value:new T.Color('#bcdcef')},uSunC:{value:new T.Color('#fff2d0')},uSunDir:{value:new T.Vector3(0,1,0)}},vertexShader:SV,fragmentShader:SF,side:T.BackSide,depthWrite:false,fog:false})}
@@ -845,7 +875,7 @@ const MAP_LAND={
 };
 function landMesh(pts,h,color,y0=0){const T=THREE,s=new T.Shape();pts.forEach((p,i)=>i?s.lineTo(p[0],-p[1]):s.moveTo(p[0],-p[1]));const g=new T.ExtrudeGeometry(s,{depth:h,bevelEnabled:false});g.rotateX(-Math.PI/2);const m=new T.Mesh(g,lam(color));m.position.y=y0;return m}
 function buildMap(){
-  const T=THREE,sc=new T.Scene(),cam=new T.PerspectiveCamera(40,1,1,3000);cam.position.set(-2,innerHeight>innerWidth?165:108,(innerHeight>innerWidth?165:108)*.62+4);cam.lookAt(-2,0,4);
+  const T=THREE,sc=new T.Scene(),cam=new T.PerspectiveCamera(40,1,1,3000);cam.position.set(-2,isPortrait()?165:108,(isPortrait()?165:108)*.62+4);cam.lookAt(-2,0,4);
   sc.background=new T.Color('#071a28');sc.fog=new T.Fog('#071a28',170,420);
   sc.add(new T.HemisphereLight(0xcfe6ff,0x203040,.85));const dl=new T.DirectionalLight(0xfff0d8,.75);dl.position.set(-40,80,30);sc.add(dl);
   const wm=waterMat();wm.uniforms.uAmp.value=.08;wm.uniforms.uDeep.value.set('#0b2f3c');wm.uniforms.uShal.value.set('#1f5a63');wm.uniforms.uSky.value.set('#3b6d84');wm.uniforms.uFog.value.set('#071a28');wm.uniforms.uFogN.value=170;wm.uniforms.uFogF.value=420;wm.uniforms.uFoam.value=0;wm.uniforms.uSunDir.value.set(-.4,.8,.3).normalize();
@@ -1260,16 +1290,21 @@ function update3D(dt,t,e){
   if(CM.on&&F.st==='idle'){P.player.rotation.y=cyaw}
   // 其他釣友
   updateOthers(base,lvl,t);
-  // 鏡頭
-  const portrait=innerHeight>innerWidth, off=portrait?{s:1.25,u:3.1,b:6.6}:{s:1.6,u:2.5,b:5.2};
+  // 鏡頭：拋竿前第三人稱，浮標入水後切第一人稱
+  const portrait=isPortrait(), off=portrait?{s:1.25,u:3.1,b:6.6}:{s:1.6,u:2.5,b:5.2};
+  const fpOn=S.fpv!==false&&end&&['sink','wait','nibble','bite','snag','retrieve','lurehit','fight'].includes(F.st);
+  P.fpk=clamp((P.fpk||0)+(fpOn?dt*1.6:-dt*2.2),0,1);const fk=P.fpk*P.fpk*(3-2*P.fpk);
   const ca=yaw,cf=fwd(ca),cr={x:-cf.z,z:cf.x};
-  const want=_v().set(base.x+cr.x*off.s-cf.x*off.b,base.y+off.u,base.z+cr.z*off.s-cf.z*off.b);
+  const tp=_v().set(base.x+cr.x*off.s-cf.x*off.b,base.y+off.u,base.z+cr.z*off.s-cf.z*off.b);
+  const eye=_v().set(base.x+cf.x*.12-cr.x*.05,base.y+1.66+Math.sin(t*1.1)*.012,base.z+cf.z*.12-cr.z*.05);
+  const want=tp.lerp(eye,fk);
   let look=_v().set(base.x+cf.x*32,lvl-1,base.z+cf.z*32);
-  if(F.st==='fight'&&end)look.lerp(end,.55);if((F.st==='wait'||F.st==='bite'||F.st==='nibble')&&end)look.lerp(end,.35);
+  if(F.st==='fight'&&end)look.lerp(end,.55+fk*.35);else if(end&&['sink','wait','bite','nibble','snag','retrieve','lurehit'].includes(F.st))look.lerp(end,.35+fk*.55);
   if(!P.camInit){P.camPos.copy(want);P.camLook.copy(look);P.camInit=1}
-  P.camPos.lerp(want,Math.min(1,dt*4));P.camLook.lerp(look,Math.min(1,dt*3));
+  P.camPos.lerp(want,Math.min(1,dt*(fk>0&&fk<1?6:4)));P.camLook.lerp(look,Math.min(1,dt*3));
   P.cam.position.copy(P.camPos);if(P.shake>0){P.shake-=dt;P.cam.position.x+=rnd(-.08,.08)*P.shake*4;P.cam.position.y+=rnd(-.08,.08)*P.shake*4}
-  P.cam.fov=portrait?64:55;P.cam.updateProjectionMatrix();P.cam.lookAt(P.camLook);P.sky.position.copy(P.cam.position);
+  if(P.body)P.body.visible=fk<.6;
+  P.cam.fov=lerp(portrait?64:55,portrait?52:42,fk);P.cam.updateProjectionMatrix();P.cam.lookAt(P.camLook);P.sky.position.copy(P.cam.position);
 }
 const ST_N={idle:'準備中',charge:'蓄力中',cast:'拋竿',sink:'等魚訊',wait:'等魚訊',nibble:'等魚訊',bite:'有口！',snag:'掛底了',retrieve:'拖路亞',lurehit:'有口！',fight:'搏魚中'};
 const nm=pr=>String((pr&&pr.n)||'釣友').slice(0,12);
@@ -1499,6 +1534,8 @@ $('#sheet').addEventListener('click',e=>{
   if(d.mixpw){const k=d.mixpw;if(MIX.pw.includes(k))MIX.pw=MIX.pw.filter(x=>x!==k);else if(MIX.pw.length<2)MIX.pw.push(k);else toast('最多兩種集魚粉');renderSheet();return}
   if('mix' in d){const mp=mixProps(MIX.kr,MIX.pw);if(!mp.n)return;use('krill_blk',MIX.kr);MIX.pw.forEach(k=>use(k));S.bucket={n:mp.n,p:mp};MIX={kr:Math.min(1,S.inv.krill_blk||0),pw:[]};save();sfx('splash');toast(`攪拌好了：${mp.name}，共 ${mp.n} 杓`);renderSheet();return}
   if('pour' in d){if(!(S.inv.chum>0))return;use('chum');const mp=mixProps(1,['pw_all']);mp.name='現成撒餌包';const n=(S.bucket&&S.bucket.p.name==='現成撒餌包'?S.bucket.n:0)+12;S.bucket={n,p:mp};save();toast('倒入現成撒餌，共 '+n+' 杓');renderSheet();return}
+  if('fpv' in d){S.fpv=S.fpv===false;save();renderSheet();return}
+  if('land' in d){S.land=S.land===false;save();orient();renderSheet();return}
   if('assist' in d){S.assist=!S.assist;save();toast(S.assist?'咬餌輔助：開':'咬餌輔助：關，全靠自己看浮標');renderSheet();return}
   if(d.join){joinSpot(d.join,+(d.px||0));return}
   if(d.say){say(d.say);return}
@@ -1523,7 +1560,7 @@ const keys={};
 // 畫面拖曳：地圖平移／釣位轉向
 let drag=null;
 $('#stage').addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,moved:0};try{$('#stage').setPointerCapture(e.pointerId)}catch(_){}});
-$('#stage').addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;drag.moved+=Math.abs(dx)+Math.abs(dy);
+$('#stage').addEventListener('pointermove',e=>{if(!drag)return;const sx=e.clientX-drag.x,sy=e.clientY-drag.y,ro=document.documentElement.classList.contains('rot'),dx=ro?sy:sx,dy=ro?-sx:sy;drag.x=e.clientX;drag.y=e.clientY;drag.moved+=Math.abs(dx)+Math.abs(dy);
   if(mode==='map'&&G.map){const k=.09*G.map.zoom;G.map.tx=clamp(G.map.tx-dx*k,-30,22);G.map.tz=clamp(G.map.tz-dy*k,-60,60)}
   else if(mode==='spot'&&CM.on){cyaw=clamp(cyaw-dx*.004,-.9,.9)}
   else if(mode==='spot'&&(F.st==='idle'||F.st==='charge')){yaw=clamp(yaw-dx*.004,-.75,.75)}});
@@ -1572,8 +1609,10 @@ async function fbRoom(name){
    ========================================================= */
 function resize(){const st=$('#stage'),w=st.clientWidth,h=st.clientHeight;if(R)R.setSize(w,h,false);
   if(G.map){G.map.cam.aspect=w/h;G.map.cam.updateProjectionMatrix()}if(G.spot){G.spot.cam.aspect=w/h;G.spot.cam.updateProjectionMatrix()}measureDock()}
-window.addEventListener('resize',resize);
-function placeLabels(cam){const w=innerWidth,h=innerHeight,v=new THREE.Vector3();
+function orient(){const de=document.documentElement,touch=matchMedia('(pointer:coarse)').matches,rot=touch&&innerHeight>innerWidth&&S.land!==false;
+  de.style.setProperty('--W',innerWidth+'px');de.style.setProperty('--H',innerHeight+'px');de.classList.toggle('rot',rot);resize()}
+window.addEventListener('resize',orient);window.addEventListener('orientationchange',()=>setTimeout(orient,250));
+function placeLabels(cam){const stg=$('#stage'),w=stg.clientWidth,h=stg.clientHeight,v=new THREE.Vector3();
   for(const l of LBL){if(mode!=='map'){continue}v.set(l.x,l.y,l.z).project(cam);if(v.z>1||v.x<-1.2||v.x>1.2||v.y<-1.2||v.y>1.2){l.e.style.visibility='hidden';continue}l.e.style.visibility='';l.e.style.transform=`translate(${(v.x+1)/2*w}px,${(1-v.y)/2*h}px) translate(-50%,-100%)`}
   if(mode==='spot'&&G.spot)for(const o of Object.values(G.spot.oth).concat(G.spot.me?[G.spot.me]:[])){if(!o.wp)continue;v.copy(o.wp).project(cam);if(v.z>1||Math.abs(v.x)>1.2){o.lab.style.visibility='hidden';continue}o.lab.style.visibility='';o.lab.style.transform=`translate(${(v.x+1)/2*w}px,${(1-v.y)/2*h}px) translate(-50%,-100%)`}}
 let last=performance.now(),t0=performance.now();
@@ -1584,7 +1623,7 @@ function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=(now-
   // 浪太大的危險
   if(mode==='spot'&&CUR&&CUR.type==='tetra'&&e.wx===4&&F.st!=='idle'){F.wv=(F.wv||0)+dt;if(F.wv>12){F.wv=0;if(Math.random()<.08){if(has('vest'))toast('大浪打上消波塊，救生衣保住了你');else if(F.r){const l=Math.round(S.m*.12);S.m-=l;lose('main');endCast(`大浪打上消波塊，你狼狽退回堤上，掉了 $${l} 和整組釣組`)}}}}
   if(has3D){update3D(dt,t,e);
-    if(mode==='map'){const M=G.map,portrait=innerHeight>innerWidth,Hh=(portrait?165:108)*M.zoom;M.cam.position.lerp(new THREE.Vector3(M.tx,Hh,M.tz+Hh*.62),Math.min(1,dt*4));M.cam.lookAt(M.tx,0,M.tz);R.render(M.sc,M.cam);placeLabels(M.cam)}
+    if(mode==='map'){const M=G.map,portrait=isPortrait(),Hh=(portrait?165:108)*M.zoom;M.cam.position.lerp(new THREE.Vector3(M.tx,Hh,M.tz+Hh*.62),Math.min(1,dt*4));M.cam.lookAt(M.tx,0,M.tz);R.render(M.sc,M.cam);placeLabels(M.cam)}
     else if(G.spot){R.render(G.spot.sc,G.spot.cam);placeLabels(G.spot.cam)}}
   if(mode==='spot'){drawUW(e);sendPresence()}else sendPresence();
   hud(e);
@@ -1595,7 +1634,7 @@ has3D=init3D();
 if(!has3D){$('#fallback').hidden=false;$('#fallback').textContent='這台裝置無法顯示 3D 地圖。仍可從下方選單逛釣具行、配釣組，並從釣點清單進入釣位。';
   const card=$('#spotCard');card.hidden=false;card.innerHTML=`<h3>選擇釣點</h3><div class="row2" style="flex-wrap:wrap">${SPOTS.map(s=>`<button class="ghost" data-go="${s.id}">${s.n}</button>`).join('')}</div>`;$('#mapHint').hidden=true}
 $('#cSnd').textContent='音效 '+(S.snd?'開':'關');
-resize();hud(env(),true);
+orient();hud(env(),true);
 requestAnimationFrame(loop);
 </script>
 </body>
