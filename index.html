@@ -1,0 +1,1597 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>彰濱磯釣</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: full-bleed live 3D sea; HUD pinned to the edges; sheets rise from the bottom on phones and float centered on desktop. Night-harbour palette: deep tide navy, sea-glass teal, buoy amber/coral. */
+:root{
+  --ink:#06131e; --deep:#0a1c2a; --panel:rgba(8,24,36,.84); --solid:#0d2131; --raise:#13304a; --line:#23465f; --line2:#2e5a78;
+  --fg:#e9f2f5; --mute:#90abbb; --tide:#38d6c6; --tide-2:#1fae9f; --tide-ink:#032621; --amber:#ffb447; --coral:#ff6450;
+  --good:#61d98d; --warn:#ffd04a; --bad:#ff5d4d;
+  --f-disp:'LXGW WenKai TC','Noto Serif TC','Songti TC',serif;
+  --f-body:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif;
+  --f-data:'Chakra Petch','Noto Sans TC',ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;background:var(--ink);color:var(--fg);font-family:var(--f-body);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button:focus-visible,input:focus-visible{outline:2px solid var(--tide);outline-offset:2px}
+#app{position:fixed;inset:0;overflow:hidden;background:radial-gradient(130% 90% at 50% 0%,#14354d 0%,var(--ink) 70%)}
+#stage{position:absolute;inset:0;touch-action:none}
+#stage canvas{display:block;width:100%;height:100%}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.tag{position:absolute;left:0;top:0;white-space:nowrap;font:600 11px/1 var(--f-body);color:#fff;background:rgba(5,16,26,.72);border:1px solid rgba(255,255,255,.18);padding:4px 7px;border-radius:999px;transform:translate(-50%,-100%)}
+.tag.town{background:none;border:0;font:700 14px var(--f-disp);color:#f3e7cf;text-shadow:0 1px 4px #000}
+.tag.road{background:#3a3226;border-color:#6b5a3e;color:#ffd99a;font:700 10px var(--f-data)}
+.tag.zone{background:none;border:0;color:#cfe2ea;font:500 12px var(--f-body);letter-spacing:.12em;text-shadow:0 1px 3px #000;opacity:.85}
+.pin{position:absolute;left:0;top:0;pointer-events:auto;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:3px}
+.pin b{display:flex;align-items:center;gap:6px;background:var(--solid);border:1.5px solid var(--tide);color:var(--fg);font:700 13px var(--f-disp);padding:6px 10px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+.pin b em{font:700 10px var(--f-data);font-style:normal;background:var(--tide);color:var(--tide-ink);border-radius:999px;padding:2px 6px}
+.pin i{width:2px;height:16px;background:linear-gradient(var(--tide),transparent)}
+.pin.on b{background:var(--tide);color:var(--tide-ink)}
+.pin.shop b{border-color:var(--amber)}
+.pin.shop b em{background:var(--amber)}
+
+.top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding-top:calc(env(safe-area-inset-top,0px) + 10px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));pointer-events:none}
+.top>*{pointer-events:auto}
+.brand h1{margin:0;font:700 26px/1.05 var(--f-disp);letter-spacing:.04em;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+.brand p{margin:3px 0 0;font:500 12px var(--f-body);color:var(--mute);letter-spacing:.14em}
+.where{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 12px;backdrop-filter:blur(10px);min-width:0;max-width:56vw}
+.where h2{margin:0;font:700 18px/1.15 var(--f-disp)}
+.where p{margin:3px 0 0;font:600 11px/1.35 var(--f-data);color:var(--mute)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:60vw}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 10px;font:600 12px/1.2 var(--f-data);white-space:nowrap;backdrop-filter:blur(10px);font-variant-numeric:tabular-nums}
+.chip.money{color:var(--amber);border-color:#5b4626}
+.chip.btn{cursor:pointer}
+#feed{position:absolute;left:max(16px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 78px);display:flex;flex-direction:column;gap:4px;pointer-events:none;max-width:70vw}
+#feed div{font:500 12px var(--f-body);background:rgba(5,16,26,.66);border-left:3px solid var(--amber);padding:4px 8px;border-radius:0 8px 8px 0;animation:fin .3s ease-out}
+@keyframes fin{from{opacity:0;transform:translateX(-8px)}}
+#toast{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 110px);transform:translateX(-50%);background:rgba(4,14,22,.92);border:1px solid var(--line2);color:var(--fg);padding:10px 16px;border-radius:14px;font:500 14px/1.4 var(--f-body);max-width:min(90vw,460px);text-align:center;pointer-events:none;z-index:30}
+#callout{position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);font:700 44px var(--f-disp);color:var(--warn);text-shadow:0 0 20px rgba(255,180,60,.6),0 3px 0 #3a2400;pointer-events:none;white-space:nowrap;animation:pop .35s ease-out}
+@keyframes pop{from{transform:translate(-50%,-50%) scale(.6);opacity:0}}
+
+.dock{position:absolute;left:0;right:0;bottom:0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.dock>*{pointer-events:auto}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.ibtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:58px;height:54px;padding:6px 8px;border-radius:14px;background:var(--panel);border:1px solid var(--line);font:500 11px var(--f-body);color:var(--mute);backdrop-filter:blur(10px)}
+.ibtn svg{width:20px;height:20px;stroke:var(--fg);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ibtn:active{transform:scale(.96)}
+.ibtn.on{border-color:var(--amber);background:#2a1f0e;color:#ffc977}
+.ibtn .n{font:700 10px var(--f-data);color:var(--amber)}
+.acts{display:grid;grid-template-columns:1.65fr 1fr;gap:10px}
+.pbtn{height:70px;border-radius:18px;background:linear-gradient(180deg,#4ae6d5,#1fae9f);color:var(--tide-ink);font:700 21px/1.1 var(--f-disp);box-shadow:0 8px 24px rgba(56,214,198,.28),inset 0 1px 0 rgba(255,255,255,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;touch-action:none}
+.pbtn small{font:500 11px var(--f-body);opacity:.78}
+.pbtn.hot{background:linear-gradient(180deg,#ffd978,#ff9f2e);color:#2c1700;box-shadow:0 0 0 3px rgba(255,190,80,.35),0 8px 26px rgba(255,160,40,.45);animation:throb .5s ease-in-out infinite alternate}
+.pbtn.hold{background:linear-gradient(180deg,#7cf0e3,#2fc4b4)}
+.pbtn:disabled{opacity:.45}
+@keyframes throb{to{transform:scale(1.03)}}
+.crow{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:8px}
+.cbtn{height:52px;border-radius:12px;background:#0b2232;border:1px solid var(--line2);font:600 13px/1.2 var(--f-body);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;touch-action:none}
+.cbtn small{font:500 10px var(--f-body);color:var(--mute)}
+.cbtn.hot{background:linear-gradient(180deg,#ffd06e,#f0952c);color:#2c1700;border:0}
+.cbtn.hot small{color:#5a3606}
+.cbtn.on{background:#ffe7a8;color:#2c1700}
+.acts.three{grid-template-columns:1.35fr 1fr 1fr}
+.sbtn{height:70px;border-radius:18px;background:var(--panel);border:1px solid var(--line2);font:600 15px/1.2 var(--f-body);touch-action:none;backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.sbtn small{font:500 10px var(--f-body);color:var(--mute)}
+.sbtn.hold{background:var(--raise);border-color:var(--amber)}
+.sbtn:disabled{opacity:.38}
+.status{font:500 13px/1.4 var(--f-body);color:var(--fg);text-align:center;text-shadow:0 1px 4px #000;min-height:18px}
+.meter{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:grid;gap:7px;backdrop-filter:blur(10px)}
+.mrow{display:grid;grid-template-columns:52px 1fr 64px;gap:8px;align-items:center;font:600 11px var(--f-data);color:var(--mute);font-variant-numeric:tabular-nums}
+.mrow span:last-child{text-align:right;color:var(--fg)}
+.bar{height:11px;border-radius:6px;background:#06121b;border:1px solid #1b3446;position:relative;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--tide);border-radius:5px}
+.bar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:#fff;opacity:.85}
+.bar.pow i{background:linear-gradient(90deg,#2fc4b4,#ffd04a,#ff6450)}
+.mapcard{background:var(--panel);border:1px solid var(--line2);border-radius:18px;padding:14px;backdrop-filter:blur(12px);display:grid;gap:10px;max-width:560px}
+.mapcard h3{margin:0;font:700 22px/1.1 var(--f-disp)}
+.mapcard h3 small{font:500 12px var(--f-body);color:var(--mute);margin-left:8px;letter-spacing:.08em}
+.mapcard p{margin:0;font:400 13px/1.6 var(--f-body);color:#cfe0e8;max-width:62ch}
+.kv{display:flex;flex-wrap:wrap;gap:6px}
+.kv span{font:600 11px/1 var(--f-data);background:#0b2232;border:1px solid var(--line);border-radius:8px;padding:6px 8px;color:var(--mute)}
+.kv span b{color:var(--fg);font-weight:600;margin-left:4px}
+.row2{display:flex;gap:8px}
+.go{flex:1;height:50px;border-radius:14px;background:linear-gradient(180deg,#4ae6d5,#1fae9f);color:var(--tide-ink);font:700 18px var(--f-disp)}
+.ghost{height:50px;padding:0 16px;border-radius:14px;border:1px solid var(--line2);background:#0b2232;font:600 14px var(--f-body)}
+.hint{font:500 12px var(--f-body);color:var(--mute);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;max-width:560px}
+
+#uwWrap{position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:var(--dockH,190px);width:132px;border-radius:14px;overflow:hidden;border:1px solid var(--line2);background:#061521;box-shadow:0 10px 26px rgba(0,0,0,.5)}
+#uwWrap header{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font:600 10px var(--f-data);color:var(--mute);letter-spacing:.06em;background:#0a1e2c}
+#uwWrap header button{font:700 11px var(--f-data);color:var(--tide)}
+#uw{display:block;width:100%;height:178px}
+#uwWrap.min #uw{display:none}
+#aimHint{position:absolute;left:50%;bottom:calc(var(--dockH,190px) + 6px);transform:translateX(-50%);font:500 12px var(--f-body);color:#d9eaf0;background:rgba(5,16,26,.6);padding:5px 10px;border-radius:999px;white-space:nowrap;pointer-events:none}
+
+/* sheets */
+#sheet{position:absolute;inset:0;background:rgba(2,9,15,.62);backdrop-filter:blur(3px);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sc{position:relative;width:100%;max-height:90%;background:var(--deep);border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -10px 40px rgba(0,0,0,.5);animation:up .25s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:.4}}
+.banner{position:relative;padding:16px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));background:linear-gradient(180deg,rgba(6,19,30,.15),rgba(10,28,42,1)),linear-gradient(100deg,#0f3a52 0%,#13304a 45%,#3a2b32 75%,#7a4630 100%);overflow:hidden;flex:none}
+.banner svg.bg{position:absolute;right:0;bottom:0;height:100%;width:auto;opacity:.5;pointer-events:none}
+.banner .kick{display:inline-block;font:700 10px var(--f-data);letter-spacing:.12em;color:var(--tide);border:1px solid rgba(56,214,198,.5);border-radius:999px;padding:3px 9px;background:rgba(3,30,30,.5)}
+.banner h2{margin:8px 0 2px;font:700 24px/1.15 var(--f-disp);position:relative}
+.banner p{margin:0;font:400 12px/1.5 var(--f-body);color:#bcd2dc;position:relative;max-width:60ch}
+.banner .x{position:absolute;top:12px;right:max(12px,env(safe-area-inset-right,0px));width:40px;height:40px;border-radius:12px;background:rgba(5,16,26,.6);border:1px solid var(--line);font:400 22px/1 var(--f-body);display:flex;align-items:center;justify-content:center;z-index:2}
+.cur{display:flex;gap:6px;overflow-x:auto;padding:8px max(16px,env(safe-area-inset-right,0px)) 2px max(16px,env(safe-area-inset-left,0px));flex:none;scrollbar-width:none}
+.cur::-webkit-scrollbar{display:none}
+.cur span{flex:none;font:600 11px var(--f-body);padding:5px 9px;border-radius:8px;border:1px solid;white-space:nowrap}
+.cur span:nth-child(4n+1){color:#7fe7dc;border-color:#22655f;background:#0b2a2a}
+.cur span:nth-child(4n+2){color:#ffc977;border-color:#6b4d22;background:#2a1f0e}
+.cur span:nth-child(4n+3){color:#ff9c8f;border-color:#6d2c27;background:#2a1210}
+.cur span:nth-child(4n){color:#b9c7ff;border-color:#34407a;background:#141a33}
+.tabs{display:flex;gap:2px;overflow-x:auto;padding:0 max(8px,env(safe-area-inset-right,0px)) 0 max(8px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);flex:none;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;padding:12px 12px 10px;font:600 14px var(--f-body);color:var(--mute);border-bottom:2px solid transparent;white-space:nowrap}
+.tab.on{color:var(--fg);border-bottom-color:var(--tide)}
+.subs{display:flex;gap:6px;overflow-x:auto;padding:10px max(16px,env(safe-area-inset-right,0px)) 2px max(16px,env(safe-area-inset-left,0px));flex:none;scrollbar-width:none}
+.subs::-webkit-scrollbar{display:none}
+.sub{flex:none;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:#0b2232;font:500 13px var(--f-body);color:#c4d6df;white-space:nowrap}
+.sub.on{background:var(--tide);border-color:var(--tide);color:var(--tide-ink);font-weight:700}
+.sb{overflow-y:auto;overscroll-behavior:contain;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 20px) max(16px,env(safe-area-inset-left,0px));-webkit-overflow-scrolling:touch}
+.gh{margin:16px 0 6px;font:700 13px var(--f-body);color:var(--tide);letter-spacing:.06em;display:flex;align-items:center;gap:8px}
+.gh::after{content:"";flex:1;height:1px;background:var(--line)}
+.it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:12px 0;border-bottom:1px solid #17334a}
+.it h4{margin:0;font:600 15px/1.3 var(--f-body)}
+.it h4 small{font:500 11px var(--f-data);color:var(--mute);margin-left:6px}
+.it p{margin:2px 0 0;font:400 12px/1.5 var(--f-body);color:var(--mute)}
+.specs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.specs span{font:600 10.5px/1 var(--f-data);color:#c8dae3;background:#0b2232;border:1px solid #1c3c52;border-radius:6px;padding:4px 6px}
+.buy{min-width:84px;height:40px;border-radius:12px;background:#0f3442;border:1px solid #2a6e74;color:#9df1e6;font:700 13px var(--f-data);padding:0 10px}
+.buy:disabled{opacity:.45}
+.buy.eq{background:var(--tide);border-color:var(--tide);color:var(--tide-ink)}
+.buy.warn{background:#3a1c18;border-color:#7a3b31;color:#ffb3a6}
+.owned{font:600 11px var(--f-data);color:var(--good)}
+.fc{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-top:10px}
+.fcard{border:1px solid var(--line);border-radius:14px;padding:12px;background:linear-gradient(160deg,#10283a,#0b1d2b);display:grid;gap:6px}
+.fcard.on{border-color:var(--tide);box-shadow:0 0 0 1px var(--tide),0 0 22px rgba(56,214,198,.18)}
+.fcard .hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.fcard .hd b{font:700 17px var(--f-disp)}
+.fcard .hd span{font:700 10px var(--f-body);padding:3px 8px;border-radius:6px;border:1px solid}
+.fcard p{margin:0;font:400 12px/1.55 var(--f-body);color:#bcd0da}
+.st{display:flex;justify-content:space-between;font:500 12px var(--f-body);color:var(--mute);border-top:1px dashed #1e3a50;padding-top:5px}
+.st b{font:700 12px var(--f-data)}
+.sizes{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.sizes button{padding:6px 9px;border-radius:9px;border:1px solid #2a5068;background:#0b2232;font:600 12px var(--f-data);color:#cfe1ea}
+.sizes button.on{background:var(--tide);border-color:var(--tide);color:var(--tide-ink)}
+.sizes button.have{border-color:#3c8a62;color:#a8f0c4}
+.sizes button:disabled{opacity:.4}
+.rig{display:grid;gap:0;margin-top:4px}
+.rr{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;width:100%;padding:0 0 0 0;min-height:58px}
+.rr .ic{align-self:stretch;display:flex;align-items:center;justify-content:center;position:relative}
+.rr .ic::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1.5px;background:#7fb6cf;opacity:.55;transform:translateX(-50%)}
+.rr.leader .ic::before{background:#7be3a2}
+.rr:first-child .ic::before{top:50%}
+.rr:last-child .ic::before{bottom:50%}
+.rr .ic svg{position:relative;width:34px;height:34px}
+.rr .tx{padding:9px 0;border-bottom:1px solid #17334a;min-width:0}
+.rr .tx small{display:block;font:600 10px var(--f-data);color:var(--mute);letter-spacing:.08em}
+.rr .tx b{display:block;font:600 14px/1.35 var(--f-body)}
+.rr .tx i{display:block;font:500 11px/1.4 var(--f-data);color:#9fbccb;font-style:normal}
+.rr .tx b.miss{color:var(--bad)}
+.rr .ar{color:var(--mute);font:600 18px var(--f-data);padding-right:4px}
+.sum{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:6px 0 4px}
+.sum div{background:#0b2232;border:1px solid var(--line);border-radius:12px;padding:9px 10px}
+.sum small{display:block;font:600 10px var(--f-body);color:var(--mute);letter-spacing:.06em}
+.sum b{font:700 18px var(--f-data);font-variant-numeric:tabular-nums}
+.sum em{font:500 11px var(--f-body);font-style:normal;color:var(--mute);margin-left:4px}
+.msgs{display:grid;gap:5px;margin:8px 0}
+.msgs div{font:500 12px/1.45 var(--f-body);padding:7px 10px;border-radius:10px}
+.msgs .e{background:#3a1512;color:#ffb5a9;border:1px solid #6e2b24}
+.msgs .w{background:#33280f;color:#ffdc8f;border:1px solid #6a5321}
+.msgs .ok{background:#0f2e22;color:#9df0bf;border:1px solid #23674a}
+.slider{display:grid;gap:8px;padding:14px 0;border-bottom:1px solid #17334a}
+.slider .lab{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.slider .lab b{font:600 15px var(--f-body)}
+.slider .lab span{font:700 22px var(--f-data);color:var(--tide);font-variant-numeric:tabular-nums}
+.slider p{margin:0;font:400 12px/1.5 var(--f-body);color:var(--mute)}
+.stp{display:grid;grid-template-columns:52px 1fr 52px;gap:10px;align-items:center}
+.stp button{height:44px;border-radius:12px;background:#0f3442;border:1px solid #2a6e74;font:700 20px var(--f-data);color:#9df1e6}
+.stp input{width:100%;accent-color:var(--tide)}
+.fishcard{display:grid;gap:10px;justify-items:center;text-align:center;padding:10px 0}
+.fishcard h3{margin:0;font:700 30px var(--f-disp)}
+.fishcard .big{font:700 44px var(--f-data);color:var(--amber);font-variant-numeric:tabular-nums}
+.fishcard .big small{font-size:18px;color:var(--mute);margin-left:4px}
+.fishcard svg{width:min(320px,80%);height:auto}
+.rec{font:700 12px var(--f-body);color:#2c1700;background:var(--amber);border-radius:999px;padding:4px 12px}
+.name{display:flex;gap:8px;margin:8px 0 14px}
+.name input{flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid var(--line2);background:#071722;color:var(--fg);padding:0 12px;font:500 15px var(--f-body)}
+.empty{padding:28px 0;text-align:center;color:var(--mute);font:400 13px/1.6 var(--f-body)}
+.help h4{margin:14px 0 4px;font:700 15px var(--f-disp);color:var(--tide)}
+.help p,.help li{font:400 13px/1.65 var(--f-body);color:#cfe0e8;max-width:62ch}
+.help ul{padding-left:18px;margin:4px 0}
+.fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--mute);font:400 13px/1.6 var(--f-body);padding:0 24px;pointer-events:none}
+
+.tools .ibtn{flex:1 1 0;min-width:0}
+.pin .who{font:600 11px var(--f-body);color:#fff;background:rgba(5,16,26,.75);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:2px 7px;max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pin .who:empty{display:none}
+.ptag{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;gap:4px;transform:translate(-50%,-100%);pointer-events:none}
+.ptag .nm{display:flex;gap:6px;align-items:center;background:rgba(5,16,26,.8);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:4px 10px;font:700 12px var(--f-body);color:#fff;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.35)}
+.ptag .nm i{font:600 10px var(--f-data);font-style:normal;color:var(--amber)}
+.ptag.me .nm{border-color:var(--tide);color:#bff5ee}
+.ptag.fight .nm{border-color:var(--coral)}
+.ptag.fight .nm i{color:#ff9c8f}
+.ptag .bub{position:relative;background:#f4f8f9;color:#0a1a24;font:600 12px/1.4 var(--f-body);padding:5px 10px;border-radius:12px;max-width:190px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.35);animation:fin .25s ease-out}
+.ptag .bub::after{content:"";position:absolute;bottom:-5px;left:50%;margin-left:-5px;border:5px solid transparent;border-top-color:#f4f8f9;border-bottom:0}
+.walk{position:absolute;top:34%;width:56px;height:76px;border-radius:18px;background:var(--panel);border:1px solid var(--line2);color:var(--fg);font:700 22px/1 var(--f-data);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;touch-action:none;backdrop-filter:blur(10px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.walk small{font:500 10px var(--f-body);color:var(--mute)}
+.walk.l{left:max(12px,env(safe-area-inset-left,0px))}
+.walk.r{right:max(12px,env(safe-area-inset-right,0px))}
+.walk.on{background:var(--raise);border-color:var(--tide)}
+@media (min-width:760px){
+  #sheet{align-items:center}
+  .sc{width:min(760px,92vw);max-height:86%;border-radius:22px;border-bottom:1px solid var(--line)}
+  #uwWrap{width:176px}
+  #uw{height:232px}
+  .spotDock{align-items:center}
+  .spotDock>*{width:min(620px,100%)}
+  .mapDock{max-width:600px}
+  .brand h1{font-size:32px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage"></div>
+  <div id="labels"></div>
+
+  <div class="top">
+    <div id="brand" class="brand"><h1>彰濱磯釣</h1><p>線西・崙尾・鹿港　海岸釣場</p></div>
+    <div id="where" class="where" hidden><h2 id="wName">—</h2><p id="wInfo">—</p></div>
+    <div class="chips">
+      <span class="chip money" id="cMoney">$0</span>
+      <span class="chip" id="cTime">--:--</span>
+      <span class="chip" id="cTide">潮位</span>
+      <span class="chip" id="cWx">天氣</span>
+      <button class="chip btn" id="cOn" data-open="friends">單人</button>
+      <button class="chip btn" id="cSnd" aria-label="音效開關">音效 開</button>
+    </div>
+  </div>
+  <div id="feed"></div>
+
+  <!-- MAP DOCK -->
+  <div class="dock mapDock" id="mapDock">
+    <div class="mapcard" id="spotCard" hidden></div>
+    <div class="hint" id="mapHint">點選地圖上的釣點查看水況與魚種，再進入 3D 釣位。拖曳地圖可以移動視角。</div>
+    <div class="tools">
+      <button class="ibtn" data-open="gear"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>裝備</button>
+      <button class="ibtn" data-open="shop"><svg viewBox="0 0 24 24"><path d="M3 10l2-5h14l2 5"/><path d="M4 10h16v10H4z"/><path d="M10 20v-5h4v5"/></svg>釣具行</button>
+      <button class="ibtn" data-open="basket"><svg viewBox="0 0 24 24"><path d="M3 11c3-5 15-5 18 0-3 5-15 5-18 0z"/><circle cx="16" cy="10.5" r=".8"/><path d="M3 11l-1.5-3M3 11l-1.5 3"/></svg><span>魚簍 <span class="n" id="nFish1">0</span></span></button>
+      <button class="ibtn" data-open="friends"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.5.1 4.4 1.6 5 4.3"/></svg><span>釣友 <span class="n" data-on>0</span></span></button><button class="ibtn" data-open="help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5V14"/><path d="M12 17.2v.1"/></svg>玩法</button>
+    </div>
+  </div>
+
+  <!-- SPOT DOCK -->
+  <div id="uwWrap" hidden><header><span>水下釣組</span><button id="uwT" aria-label="收合水下視窗">−</button></header><canvas id="uw"></canvas></div>
+  <div id="aimHint" hidden>按住 ◀ ▶ 沿堤走動・左右滑動畫面調整拋竿方向</div>
+  <button class="walk l" id="wL" hidden aria-label="往左走">◀<small>往左</small></button><button class="walk r" id="wR" hidden aria-label="往右走">▶<small>往右</small></button>
+  <div class="dock spotDock" id="spotDock" hidden>
+    <div class="meter" id="powP" hidden><div class="mrow"><span>力道</span><div class="bar pow"><i id="powI"></i></div><span id="powV">0 m</span></div></div>
+    <div class="meter" id="chumP" hidden><div class="mrow"><span>撒餌</span><div class="bar pow"><i id="cpI"></i></div><span id="cpV">0 m</span></div><div class="crow"><button class="cbtn hot" id="cThrow">撒出<small id="cThrowS">按住蓄力</small></button><button class="cbtn" id="cFloat">對準浮標<small>一鍵撒過去</small></button><button class="cbtn" id="cMix">調配<small>誘餌桶</small></button><button class="cbtn" id="cDone">完成<small>收起杓子</small></button></div></div>
+    <div class="meter" id="slkP" hidden><div class="mrow"><span>母線弧度</span><div class="bar"><i id="slkI"></i></div><span id="slkV">0 m</span></div></div>
+    <div class="meter" id="figP" hidden>
+      <div class="mrow"><span>距離</span><div class="bar"><i id="fDi"></i></div><span id="fDv">0 m</span></div>
+      <div class="mrow"><span>張力</span><div class="bar"><i id="fTi"></i><u id="fTu"></u></div><span id="fTv">0 kg</span></div>
+      <div class="mrow"><span>魚體力</span><div class="bar"><i id="fSi" style="background:var(--amber)"></i></div><span id="fSv">100%</span></div>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="tools">
+      <button class="ibtn" data-open="gear"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>裝備</button>
+      <button class="ibtn" data-open="shop"><svg viewBox="0 0 24 24"><path d="M3 10l2-5h14l2 5"/><path d="M4 10h16v10H4z"/><path d="M10 20v-5h4v5"/></svg>釣具行</button>
+      <button class="ibtn" data-open="basket"><svg viewBox="0 0 24 24"><path d="M3 11c3-5 15-5 18 0-3 5-15 5-18 0z"/><circle cx="16" cy="10.5" r=".8"/><path d="M3 11l-1.5-3M3 11l-1.5 3"/></svg><span>魚簍 <span class="n" id="nFish2">0</span></span></button>
+      <button class="ibtn" data-open="friends"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.5.1 4.4 1.6 5 4.3"/></svg><span>釣友 <span class="n" data-on>0</span></span></button><button class="ibtn" id="bChum"><svg viewBox="0 0 24 24"><path d="M5 14c0-4 3-7 7-7s7 3 7 7"/><path d="M4 14h16l-2 5H6z"/><circle cx="9" cy="5" r="1"/><circle cx="14" cy="4" r="1"/></svg><span>撒餌 <span class="n" id="nChum">0</span></span></button>
+      <button class="ibtn" id="bMap"><svg viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>地圖</button>
+    </div>
+    <div class="acts">
+      <button class="pbtn" id="bP"><span id="bPt">拋竿</span><small id="bPs">按住蓄力，放開拋出</small></button>
+      <button class="sbtn" id="bT" hidden><span>理線</span><small id="bTs">收掉多餘的線</small></button><button class="sbtn" id="bS"><span id="bSt">收竿</span><small id="bSs"></small></button>
+    </div>
+  </div>
+
+  <div id="toast" hidden></div>
+  <div id="callout" hidden></div>
+  <div id="sheet" hidden></div>
+  <div class="fallback" id="fallback" hidden></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+window.FB_CONFIG={
+  apiKey:"AIzaSyBCR0H_egv8WSo0bdGrPpnvK_NLPin9OVM",
+  authDomain:"changbin-fishing.firebaseapp.com",
+  databaseURL:"https://changbin-fishing-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"changbin-fishing",
+  storageBucket:"changbin-fishing.firebasestorage.app",
+  messagingSenderId:"49819851337",
+  appId:"1:49819851337:web:02bd7400b6b720d1df3d98"
+};
+</script>
+
+<script>
+'use strict';
+/* =========================================================
+   基本工具
+   ========================================================= */
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), lerp=(a,b,t)=>a+(b-a)*t, rnd=(a,b)=>a+Math.random()*(b-a);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sid=n=>String(n).replace('.','_');
+const f1=n=>(Math.round(n*10)/10).toFixed(1), f2=n=>(Math.round(n*100)/100).toFixed(2);
+const hash=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)};
+const pick=list=>{let t=0;for(const [,a] of list)t+=a;let r=Math.random()*t;for(const [k,a] of list){if((r-=a)<=0)return k}return list.length?list[list.length-1][0]:null};
+const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+
+/* =========================================================
+   釣具資料（號數、線徑、拉力依日本標準線規）
+   ========================================================= */
+const JP={0.6:[.128,2.5],0.8:[.148,3],1:[.165,4],1.2:[.185,5],1.5:[.205,6],1.75:[.22,7],2:[.235,8],2.5:[.26,10],3:[.285,12],3.5:[.31,14],4:[.33,16],5:[.37,20],6:[.405,24],7:[.435,28],8:[.47,32],9:[.495,36],10:[.52,40]};
+const JPN=Object.keys(JP).map(Number).sort((a,b)=>a-b);
+const PELB={0.6:12,0.8:14,1:18,1.2:22,1.5:25,2:32,3:45,4:55,5:70,6:80};
+const KG=lb=>Math.round(lb*0.4536*10)/10;
+const QIAN=3.75; // 1 錢 = 3.75 g
+const IT={}; const add=o=>{IT[o.id]=o;return o};
+
+// 磯竿
+[0.6,0.8,1,1.2,1.5,1.75,2,2.5,3,4,5].forEach(no=>{
+  const kg=+(2.5+no*3.4).toFixed(1), act=clamp(.78-no*.12,.12,.72), cast=Math.round(30+no*5), opt=+(4+no*3).toFixed(1);
+  const lo=Math.round((no*1.2+.8)*2)/2, hi=Math.round((no*1.8+1.6)*2)/2;
+  add({id:'rod_iso_'+sid(no),cat:'rod',sub:'iso',uniq:1,grp:no<1.5?'細號磯竿（0.6–1.2 號）':no<3?'中號磯竿（1.5–2.5 號）':'粗號磯竿（3–5 號）',
+    n:`磯竿 ${no}號 5.3m`,p:Math.round(1200+no*1100),kg,act,cast,opt,len:5.3,lure:false,
+    spec:['5.3m',`負荷 ${kg}kg`,`適用道線 ${lo}–${hi}號`,act>=.5?'軟調':act>=.3?'中調':'硬調'],
+    desc:no<1.2?'細線輕標，適合黃錫鯛、沙梭、臭肚':no<2?'黑鯛、黃錫鯛萬用，新手首選':no<3?'大黑鯛、鱸魚、中型石斑':'石斑、大型鱸魚，消波塊強攻'});
+});
+// 路亞竿
+[['ML','8ft',2.44,5.5,55,'7–21g',14,.32,'PE 0.6–1.2'],['M','9ft',2.74,7.5,64,'10–30g',20,.25,'PE 0.8–1.5'],['MH','9.6ft',2.9,10,72,'15–45g',30,.18,'PE 1–2'],['H','10ft',3.05,14,78,'20–60g',40,.12,'PE 1.5–3']].forEach(([pw,ft,len,kg,cast,lw,opt,act,pe])=>
+  add({id:'rod_lure_'+pw,cat:'rod',sub:'lure',uniq:1,grp:'海水路亞竿',n:`路亞竿 ${pw} ${ft}`,p:Math.round(1500+kg*260),kg,act,cast,opt,len,lure:true,
+    spec:[`${len}m`,`適用 ${lw}`,pe,`負荷 ${kg}kg`],desc:'拋投米諾、鐵板、軟蟲；配浮標釣組會拋得比較近'}));
+// 捲線器 [型號, 齒輪比, 最大煞車力kg, [尼龍號, 米], 價格]
+[['2500LBD',5.2,4,[2.5,150],3200],['C3000LBD',5.3,5,[3,150],4600],['3000LBD-H',6.2,6,[3,150],6200],['4000LBD',5.7,8,[4,150],9200]].forEach(([md,ra,dr,cap,p])=>
+  add({id:'reel_lb_'+md,cat:'reel',sub:'lbd',uniq:1,grp:'手煞車捲線器（磯釣用）',n:`手煞車 ${md}`,p,ratio:ra,drag:dr,cap,lever:true,
+    spec:[`齒輪比 ${ra}:1`,`最大煞車力 ${dr}kg`,`容線 尼龍${cap[0]}號-${cap[1]}m`,'手煞車可瞬間放線'],desc:'搏魚時扳手煞車放線，讓魚往外衝、避免貼著消波塊斷線'}));
+[['2500',5.1,4,[2.5,150],1100],['C3000',5.3,5,[3,150],1500],['4000',5.3,9,[4,150],2100],['5000',5.2,10,[5,150],2900],['6000',4.9,12,[6,200],3800]].forEach(([md,ra,dr,cap,p])=>
+  add({id:'reel_sp_'+md,cat:'reel',sub:'spin',uniq:1,grp:'一般紡車捲線器',n:`紡車 ${md}`,p,ratio:ra,drag:dr,cap,lever:false,
+    spec:[`齒輪比 ${ra}:1`,`最大煞車力 ${dr}kg`,`容線 尼龍${cap[0]}號-${cap[1]}m`,'無手煞車'],desc:'只靠前煞車出線，價格親民，路亞與沙岸遠投都適用'}));
+// 母線
+[1.5,1.75,2,2.5,3,3.5,4,5,6].forEach(no=>{const [d,lb]=JP[no];
+  add({id:'main_ny_'+sid(no),cat:'main',sub:'main_ny',grp:'半浮水尼龍道線 150m',n:`尼龍道線 ${no}號`,p:Math.round(160+no*70),mat:'ny',no,d,lb,kg:KG(lb),m:150,
+    spec:[`${lb}lb（${KG(lb)}kg）`,`線徑 ${d}mm`,'150m','有延展'],desc:'磯釣標準道線，延展性能吸收衝擊'})});
+Object.keys(PELB).map(Number).sort((a,b)=>a-b).forEach(no=>{const lb=PELB[no],d=JP[no][0];
+  add({id:'main_pe_'+sid(no),cat:'main',sub:'main_pe',grp:'PE 編織線 150m',n:`PE 母線 ${no}號`,p:Math.round(300+no*130),mat:'pe',no,d,lb,kg:KG(lb),m:150,
+    spec:[`${lb}lb（${KG(lb)}kg）`,`號數 ${no}`,'150m','無延展'],desc:'強度高、線細好遠投；沒有延展，衝擊大，要配子線'})});
+// 子線
+JPN.forEach(no=>{const [d,lb]=JP[no];
+  add({id:'ld_fc_'+sid(no),cat:'leader',sub:'ld_fc',grp:'碳纖維子線 50m',n:`碳纖維子線 ${no}號`,p:Math.round(110+no*42),mat:'fc',no,d,lb,kg:KG(lb),m:50,
+    spec:[`${lb}lb（${KG(lb)}kg）`,`線徑 ${d}mm`,'50m','耐磨・水中隱形'],desc:''});
+  add({id:'ld_ny_'+sid(no),cat:'leader',sub:'ld_ny',grp:'尼龍子線 50m',n:`尼龍子線 ${no}號`,p:Math.round(50+no*18),mat:'ny',no,d,lb,kg:KG(lb),m:50,
+    spec:[`${lb}lb（${KG(lb)}kg）`,`線徑 ${d}mm`,'50m','有彈性・便宜'],desc:''});
+});
+// 浮標
+const FT={
+  abo:{n:'阿波',tag:'抗浪穩定',tc:'#ff9c8f',desc:'圓球型中通浮標，乘浪穩定，不怕湧浪；訊號較鈍但真實，吃牢時下沉乾脆。',sens:70,wave:96,feat:'高反差雙色阿波球',base:90},
+  eabo:{n:'電子阿波',tag:'夜釣抗浪',tc:'#ff8a5c',desc:'阿波球頂端裝上紅色電子燈，夜間看得清楚又不怕湧浪；訊號比電子浮標鈍一些。',sens:72,wave:94,feat:'紅色 LED 燈頂',base:250,led:'#ff4a2a'},
+  long:{n:'長標',tag:'極度敏銳',tc:'#7fe7dc',desc:'細長標身，微小的頓點訊號無所遁形；怕風浪，標身容易被浪推得搖晃。',sens:95,wave:55,feat:'紅黃黑相間三色標目',base:130},
+  short:{n:'短籤',tag:'平衡泛用',tc:'#ffc977',desc:'短小標身，抗浪能力好，下沉訊號直觀；新手老手都適合。',sens:82,wave:78,feat:'亮橘加粗標尾',base:110},
+  cone:{n:'圓錐阿波',tag:'全遊動專用',tc:'#b9c7ff',desc:'圓錐造型入水順暢，搭配全遊動往底層探索，吃餌訊號柔和。',sens:76,wave:88,feat:'錐形雙色標身',base:150},
+  elec:{n:'電子浮標',tag:'夜釣敏銳',tc:'#d4ff6a',desc:'棒狀標身頂端裝電子燈，夜裡浮標一點點下沉都看得到；抗浪普通，起風時燈會晃。',sens:86,wave:72,feat:'黃綠色 LED 標頭',base:280,sizes:[1,1.5,2,2.5,3,4,5,6],led:'#d4ff6a'}
+};
+for(const ty in FT){const T=FT[ty];T.sizes=T.sizes||[1,1.5,2,2.5,3,4,5,6];
+  T.sizes.forEach(q=>add({id:`fl_${ty}_${sid(q)}`,cat:'float',sub:'float',grp:T.n,n:`${T.n} ${q}錢`,p:T.base+Math.round(q*35),ty,q,g:q*QIAN,sens:T.sens,wave:T.wave,win:.75+T.sens/100*1.15,
+    spec:[`浮力 ${q}錢（${(q*QIAN).toFixed(1)}g）`,T.tag]}))}
+// 鉛
+[['G5',.16],['G2',.31],['B',.55],['2B',.75],['3B',.95],['5B',1.85]].forEach(([z,g])=>add({id:'sk_b_'+z,cat:'sinker',sub:'bite',grp:'咬鉛（夾在子線上）',n:`咬鉛 ${z}`,p:60,g,pack:20,spec:[`${g}g`,'20 顆'],desc:'微調浮標吃水，細膩'}));
+[0.5,1,1.5,2,3,4,5].forEach(q=>add({id:'sk_q_'+sid(q),cat:'sinker',sub:'qian',grp:'錢鉛（配錢數浮標）',n:`錢鉛 ${q}錢`,p:Math.round(40+q*18),g:q*QIAN,pack:6,spec:[`${(q*QIAN).toFixed(2)}g`,'6 顆'],desc:'配合錢數浮標使用，快速沉到棚位'}));
+// 鉤
+const CL=['','極小口','小口','中口','大口','大型魚','特大型魚'];
+[['sode','袖鉤',[[3,1,1.6],[5,1,2.2],[7,2,2.8],[9,2,3.4]],'細軸袖鉤','沙梭、臭肚、小黃錫鯛'],
+ ['chinu','黑鯛鉤',[[1,2,3.2],[2,3,4],[3,3,5],[4,4,6],[5,4,7]],'黑鯛鉤（チヌ）','黑鯛、黃錫鯛標準鉤'],
+ ['iseni','伊勢尼',[[8,3,5],[10,4,6.5],[12,4,8],[14,5,10]],'伊勢尼','粗軸耐拉，鱸魚、白帶、中型魚'],
+ ['grouper','石斑鉤',[[14,5,12],[16,6,15],[18,6,18]],'管付石斑鉤','石斑、大型魚專用']
+].forEach(([k,name,list,grp,use])=>list.forEach(([no,cls,kg])=>add({id:`hk_${k}_${no}`,cat:'hook',sub:k,grp,n:`${name} ${no}號`,p:Math.round(40+kg*9),cls,kg,pack:10,spec:[CL[cls],`耐拉 ${kg}kg`,'10 支'],desc:use})));
+// 配件
+add({id:'stop_knot',cat:'stopper',sub:'stopper',grp:'浮標止',n:'浮標止（棉線止結）',p:40,pack:10,wear:.12,spec:['10 個','可滑動調棚'],desc:'綁在母線上決定棚深，會慢慢磨損'});
+add({id:'stop_rub',cat:'stopper',sub:'stopper',grp:'浮標止',n:'浮標止（矽膠）',p:55,pack:6,wear:.05,spec:['6 個','耐磨'],desc:'比棉線耐用'});
+add({id:'bead',cat:'bead',sub:'bead',grp:'止珠',n:'止珠（太空豆）',p:30,pack:20,spec:['20 顆'],desc:'夾在浮標止與浮標之間，保護浮標止'});
+[[12,8],[10,12],[8,17],[6,24]].forEach(([no,kg])=>add({id:'sw_'+no,cat:'swivel',sub:'swivel',grp:'轉環',n:`轉環 #${no}`,p:Math.round(35+kg*2),kg,pack:10,spec:[`耐拉 ${kg}kg`,'10 個'],desc:'連接母線與子線，防止扭線、結點更強'}));
+// 餌料（每包 10 份）
+[['krill','南極蝦','shrimp',60,'臭肚、黑鯛、瓜仔的萬用餌，軟、容易被偷吃'],['iso_shrimp','磯沙蝦','shrimp',110,'黃錫鯛、黑鯛最穩定的餌'],['white_shrimp','活白蝦','shrimp',170,'鱸魚、石斑最愛的活餌'],
+ ['sandworm','沙蟲','worm',90,'沙梭、午仔魚、黃錫鯛'],['aoisome','青蟲（海蟲）','worm',130,'會動的蟲餌，黃錫鯛、鱸魚'],
+ ['clam','貝肉','shell',80,'黑鯛、黃錫鯛'],['barnacle','藤壺','shell',120,'消波塊黑鯛專攻'],['crab','小螃蟹','shell',120,'大黑鯛、石斑，不怕小魚偷吃'],
+ ['corn','玉米粒','grain',45,'黑鯛、臭肚，小魚不易偷'],['bread','麵包餌','grain',40,'烏魚、臭肚'],
+ ['squid','魷魚條','fishm',90,'石斑、白帶、狗母'],['mackerel','秋刀魚片','fishm',100,'白帶魚首選'],['tamba','活丁香魚','fishm',160,'鱸魚、石斑、白帶的活餌']
+].forEach(([id,n,sub,p,d])=>add({id,cat:'bait',sub,grp:{shrimp:'蝦類',worm:'蟲類',shell:'貝蟹類',grain:'穀粉類',fishm:'魚肉・活餌'}[sub],n,p,pack:10,spec:['10 份'],desc:d}));
+// 路亞
+[['minnow9','米諾 9cm 浮水','minnow',9,[.03,.25],.01,380],['minnow12','米諾 12cm 沉水','minnow',18,[.2,.55],.02,450],
+ ['jig20','鐵板 20g','jig',20,[.2,1],.05,220],['jig40','鐵板 40g','jig',40,[.35,1],.06,260],
+ ['soft','軟蟲＋鉛頭 10g','soft',10,[.6,1],.08,160],['popper','波爬 14g','top',14,[0,.05],0,420]
+].forEach(([id,n,sub,g,lay,snag,p])=>add({id,cat:'lure',sub,grp:{minnow:'米諾',jig:'鐵板',soft:'軟蟲',top:'水面系'}[sub],n,p,g,lay,snag,pack:1,spec:[`${g}g`,`泳層 ${Math.round(lay[0]*100)}–${Math.round(lay[1]*100)}%`],desc:{minnow:'中上層，鱸魚、瓜仔',jig:'快速沉底再抽上來，白帶、瓜仔',soft:'貼底慢拖，石斑、狗母',top:'水面噴濺，清晨黃昏的鱸魚、瓜仔'}[sub]}));
+// 雜貨
+const PW={
+  pw_chinu:{n:'黑鯛集魚粉',p:160,sink:.1,range:3,rad:.5,bias:{kurodai:1.7,kichinu:1.5},desc:'中比重、濁度高，黑鯛、黃錫鯛專用'},
+  pw_heavy:{n:'重比重粉',p:140,sink:.4,range:9,rad:-.5,bias:{grouper:1.3,kurodai:1.2},desc:'沉得快、丟得遠，把魚聚在底層'},
+  pw_float:{n:'浮游麵包粉',p:120,sink:-.12,range:-2,rad:1,maxL:.4,bias:{bora:1.8,aigo:1.4},desc:'漂在中上層，烏魚、臭肚'},
+  pw_aigo:{n:'海藻臭肚粉',p:130,sink:0,range:0,rad:.5,bias:{aigo:1.9,bora:1.3},desc:'海藻味，臭肚最愛'},
+  pw_saury:{n:'秋刀魚泥',p:170,sink:.08,range:1,rad:.8,bias:{tachiuo:1.8,aji:1.4,suzuki:1.2},desc:'魚腥味重，白帶、瓜仔、鱸魚'},
+  pw_all:{n:'萬用集魚粉',p:110,sink:.05,range:2,rad:1.5,bias:{},all:1.25,desc:'擴散範圍大，什麼魚都會靠過來'},
+  pw_amino:{n:'氨基酸誘魚劑',p:200,sink:0,range:0,rad:0,str:.3,dur:.35,bias:{},desc:'誘魚力 ＋30%、持續時間 ＋35%'}};
+add({id:'krill_blk',cat:'chumi',sub:'chumkrill',grp:'冷凍南極蝦塊',n:'南極蝦冷凍塊 3kg',p:180,pack:1,spec:['每塊 ＋8 杓','誘魚力強','小魚也會來'],desc:'撒餌的基底。誘魚力最強，但臭肚、河豚也會跟著來偷餌'});
+for(const k in PW){const w=PW[k];add({id:k,cat:'chumi',sub:'powder',grp:'集魚粉・添加劑',n:w.n,p:w.p,pack:1,spec:['每包 ＋6 杓',w.sink>.2?'沉得快':w.sink<0?'浮在上層':'中比重',w.range>4?'丟得遠':w.rad>=1?'擴散廣':'集中'],desc:w.desc})}
+add({id:'chum',cat:'chumi',sub:'chumready',grp:'現成撒餌',n:'現成撒餌包（南極蝦＋萬用粉）',p:150,pack:1,spec:['12 杓','不用調配'],desc:'懶得調就買這包，倒進誘餌桶直接用'});
+add({id:'net',cat:'misc',sub:'misc',grp:'工具',n:'玉柄撈網 6m',p:1600,uniq:1,spec:['永久'],desc:'堤防高，1.5kg 以上的魚沒撈網容易在拉上來時掉'});
+add({id:'lamp',cat:'misc',sub:'misc',grp:'工具',n:'頭燈',p:600,uniq:1,spec:['永久'],desc:'夜間看浮標比較清楚（電子標不需要）'});
+add({id:'vest',cat:'misc',sub:'misc',grp:'工具',n:'救生衣',p:900,uniq:1,spec:['永久'],desc:'東北季風大浪時站在消波塊上的保命裝備'});
+add({id:'cooler',cat:'misc',sub:'misc',grp:'工具',n:'冰箱 45L',p:2200,uniq:1,spec:['魚簍上限 10 → 20'],desc:'裝更多魚再一起賣'});
+
+const SHOP=[
+  {k:'rod',n:'釣竿',subs:[['iso','磯竿'],['lure','路亞竿']]},
+  {k:'reel',n:'捲線器',subs:[['lbd','手煞車捲線器'],['spin','紡車捲線器']]},
+  {k:'line',n:'線材',subs:[['main_ny','母線・尼龍道線'],['main_pe','母線・PE'],['ld_fc','子線・碳纖維'],['ld_ny','子線・尼龍']]},
+  {k:'float',n:'浮標',subs:[['float','浮標']]},
+  {k:'sinker',n:'鉛',subs:[['bite','咬鉛'],['qian','錢鉛']]},
+  {k:'hook',n:'鉤',subs:[['sode','袖鉤'],['chinu','黑鯛鉤'],['iseni','伊勢尼'],['grouper','石斑鉤']]},
+  {k:'acc',n:'配件',subs:[['stopper','浮標止'],['bead','止珠'],['swivel','轉環']]},
+  {k:'bait',n:'餌料',subs:[['shrimp','蝦類'],['worm','蟲類'],['shell','貝蟹類'],['grain','穀粉類'],['fishm','魚肉・活餌']]},
+  {k:'lure',n:'路亞',subs:[['minnow','米諾'],['jig','鐵板'],['soft','軟蟲'],['top','水面系']]},
+  {k:'chumcat',n:'撒餌',subs:[['chumkrill','南極蝦塊'],['powder','集魚粉'],['chumready','現成撒餌']]},
+  {k:'misc',n:'雜貨',subs:[['misc','雜貨']]},
+  {k:'market',n:'魚市',subs:[['market','收購']]}
+];
+const SLOTS=[['rod','釣竿',['rod']],['reel','捲線器',['reel']],['main','母線（道線）',['main']],['stopper','浮標止',['stopper']],['bead','止珠',['bead']],['float','浮標',['float']],['swivel','轉環',['swivel']],['leader','子線',['leader']],['s1','鉛 1',['sinker']],['s2','鉛 2',['sinker']],['s3','鉛 3',['sinker']],['hook','鉤',['hook']],['bait','餌／路亞',['bait','lure']]];
+const CAT_SLOT={rod:'rod',reel:'reel',main:'main',stopper:'stopper',bead:'bead',float:'float',swivel:'swivel',leader:'leader',hook:'hook',bait:'bait',lure:'bait'};
+const CAT_N={rod:'釣竿',reel:'捲線器',main:'母線',leader:'子線',float:'浮標',sinker:'鉛',hook:'鉤',stopper:'浮標止',bead:'止珠',swivel:'轉環',bait:'餌料',lure:'路亞',chumi:'撒餌材料',misc:'雜貨'};
+
+/* =========================================================
+   魚種與釣點（彰化線西、崙尾、鹿港）
+   ========================================================= */
+const FISH={
+  kurodai:{n:'黑鯛',al:'黑格',w:[.25,2.8],ppk:480,pk:1.15,lay:[.55,1],b:{barnacle:1,crab:.95,iso_shrimp:.8,clam:.8,corn:.65,krill:.5,white_shrimp:.6,sandworm:.35},l:{soft:.25},t:[1,1.15,1.35],m:3,bite:'slow',sea:[1,2,3,9,10,11,12],lf:1,col:'#3c4650'},
+  kichinu:{n:'黃錫鯛',al:'赤翅仔',w:[.2,1.4],ppk:400,pk:1.05,lay:[.5,1],b:{iso_shrimp:1,sandworm:.9,aoisome:.9,clam:.7,krill:.6,white_shrimp:.8},l:{soft:.3},t:[1,1,1.25],m:3,bite:'slow',lf:1,col:'#c9b37a'},
+  suzuki:{n:'七星鱸',al:'鱸魚',w:[.5,6],ppk:340,pk:1.3,lay:[.15,.9],b:{white_shrimp:1,tamba:.9,aoisome:.5,iso_shrimp:.3},l:{minnow9:1,minnow12:.9,soft:.55,jig20:.35,popper:.3},t:[.55,1.5,1.7],m:5,bite:'gone',lf:1.15,col:'#9aa6ad'},
+  kisu:{n:'沙梭',al:'沙鮻',w:[.04,.25],ppk:650,pk:.85,lay:[.85,1],b:{sandworm:1,aoisome:.9},l:{},t:[1.2,.35,1],m:1,bite:'tremble',lf:1.1,col:'#e0d2b0'},
+  threadfin:{n:'午仔魚',al:'四指馬鮁',w:[.2,1.3],ppk:520,pk:1.2,lay:[.6,1],b:{sandworm:1,aoisome:.9,white_shrimp:.7,iso_shrimp:.6},l:{soft:.2},t:[1,1.1,1.4],m:2,bite:'run',sea:[5,6,7,8,9,10,11],lf:1,col:'#b9b39c'},
+  aigo:{n:'臭肚魚',al:'象魚',w:[.15,1],ppk:220,pk:1.15,lay:[.2,.8],b:{krill:1,bread:.9,iso_shrimp:.7,corn:.5,sandworm:.35},l:{},t:[1.2,.3,1],m:1,bite:'tremble',lf:.95,col:'#7a7a52'},
+  grouper:{n:'點帶石斑',al:'石斑',w:[.4,5],ppk:560,pk:1.45,lay:[.8,1],b:{tamba:1,squid:.8,white_shrimp:.8,crab:.6,iso_shrimp:.5,mackerel:.5},l:{soft:.7,jig20:.3},t:[1,1.2,1.3],m:5,bite:'gone',lf:1,col:'#6b5a3e'},
+  tachiuo:{n:'白帶魚',al:'白帶',w:[.3,1.8],ppk:360,pk:1,lay:[.2,.9],b:{mackerel:1,tamba:1,squid:.6},l:{jig20:.9,jig40:.8,minnow12:.6},t:[.08,1.6,1.25],m:3,bite:'stop',sea:[1,2,3,10,11,12],lf:2.6,col:'#d8e2e8'},
+  bora:{n:'烏魚',al:'鯔',w:[.6,3],ppk:160,pk:1.25,lay:[0,.5],b:{bread:1,corn:.6,krill:.4},l:{},t:[1,.6,1],m:2,bite:'slow',sea:[11,12,1,2],lf:1.1,col:'#5e6b74'},
+  aji:{n:'瓜仔',al:'鰺',w:[.15,1.2],ppk:280,pk:1.35,lay:[.1,.7],b:{krill:.8,tamba:.7,squid:.4},l:{jig20:1,minnow9:.7,jig40:.6,popper:.4},t:[.8,1,1.6],m:2,bite:'run',lf:1,col:'#8fb0b8'},
+  eso:{n:'狗母魚',al:'狗母',w:[.15,.8],ppk:120,pk:1,lay:[.8,1],b:{sandworm:.7,tamba:.8,squid:.6},l:{soft:.8,jig20:.5,minnow12:.4},t:[1,.8,1],m:3,bite:'gone',lf:1.2,col:'#a08f6a'},
+  fugu:{n:'河豚',al:'刺規',w:[.1,.6],ppk:0,pk:.9,lay:[.3,1],any:.45,t:[1,1,1],m:1,bite:'tremble',lf:.8,col:'#b8a678',junk:true}
+};
+const BITE_N={slow:'浮標慢慢沉入',gone:'浮標一口氣消失',tremble:'浮標小抖後下沉',run:'浮標橫向被拖走',stop:'浮標停頓後上浮'};
+const BITE_K={slow:{ws:.55,wm:1.4,nb:[0,2]},gone:{ws:0,wm:.8,nb:[0,1]},tremble:{ws:.25,wm:1,nb:[1,3]},run:{ws:.2,wm:1.1,nb:[0,1]},stop:{ws:.3,wm:1.2,nb:[1,2]}};
+const SPOTS=[
+  {id:'xx_wall',n:'線西海堤',sub:'外海消波塊',type:'tetra',x:-14.6,z:-27,d0:1.6,sl:.1,tr:3.6,sr:.9,cur:.15,bot:'消波塊・礁石',snag:1,
+   fish:{kurodai:1,grouper:.7,aigo:1,kichinu:.5,suzuki:.35,aji:.35,fugu:.5},desc:'線西區外圍的長堤，堤腳堆滿消波塊。黑鯛、臭肚和石斑躲在塊體縫隙，拉魚時要防止魚鑽進消波塊。'},
+  {id:'xx_mouth',n:'線西水道口',sub:'水道出海口',type:'canal',x:-13.2,z:-16.4,d0:2,sl:.08,tr:3.6,sr:.35,cur:.55,bot:'泥沙',snag:.25,wide:85,
+   fish:{suzuki:1,kichinu:.9,bora:.8,aji:.7,threadfin:.5,kurodai:.6,eso:.3,fugu:.4},desc:'線西水道與外海交會處，潮水進出流速快，轉流前後鱸魚與瓜仔最活躍。'},
+  {id:'lunwei',n:'崙尾水道',sub:'內側水道',type:'canal',x:-1,z:13.7,d0:1.2,sl:.06,tr:3.2,sr:.25,cur:.3,bot:'泥底',snag:.2,wide:70,
+   fish:{kichinu:1,kurodai:.8,bora:.9,suzuki:.6,eso:.4,fugu:.4,kisu:.3},desc:'崙尾區與鹿港區之間的水道，水面平穩，適合細線輕標釣黃錫鯛與烏魚。'},
+  {id:'lk_wall',n:'鹿港西堤',sub:'深水消波塊',type:'tetra',x:-14.6,z:27,d0:2.6,sl:.12,tr:3.6,sr:1,cur:.2,bot:'消波塊・礁石',snag:1,
+   fish:{tachiuo:1,grouper:.8,kurodai:.7,aji:.7,aigo:.6,suzuki:.4,fugu:.4},desc:'鹿港區最外側的深水堤，入夜後白帶魚靠岸，消波塊底下也有大型石斑。'},
+  {id:'lk_sand',n:'鹿港外沙岸',sub:'沙灘・潮間帶',type:'sand',x:2.4,z:46,d0:-.2,sl:.055,tr:0,sr:.05,cur:.2,bot:'沙底',snag:.08,
+   fish:{kisu:1,threadfin:1,eso:.6,tachiuo:.45,aji:.5,fugu:.5,suzuki:.3},desc:'鹿港南側的沙岸。退潮時潮間帶大片露出，人要跟著水線往外走；遠投沙蟲釣沙梭與午仔魚。'}
+];
+const spotById=id=>SPOTS.find(s=>s.id===id);
+
+/* =========================================================
+   存檔
+   ========================================================= */
+const SAVE='chc-iso-v2';
+function starter(){return{v:2,name:'釣友'+(1000+Math.floor(Math.random()*9000)),m:2500,
+  inv:{rod_iso_1_5:1,reel_sp_C3000:1,main_ny_2_5:1,ld_fc_1_75:1,fl_abo_1:2,stop_knot:10,bead:20,sw_10:10,sk_q_0_5:6,sk_b_2B:20,hk_chinu_2:10,krill:10,sandworm:10,krill_blk:1,pw_chinu:1,chum:1},
+  lm:{main_ny_2_5:150,ld_fc_1_75:50},
+  eq:{rod:'rod_iso_1_5',reel:'reel_sp_C3000',main:'main_ny_2_5',stopper:'stop_knot',bead:'bead',float:'fl_abo_1',swivel:'sw_10',leader:'ld_fc_1_75',s1:'sk_q_0_5',s2:'sk_b_2B',s3:null,hook:'hk_chinu_2',bait:'krill'},
+  cfg:{tana:3,ll:1.5,drag:1.4},fish:[],best:{},total:0,chumT:0,chumSp:null,snd:true,assist:true,bucket:null}}
+function load(){let o=null;try{o=JSON.parse(localStorage.getItem(SAVE)||'null')}catch(e){}
+  const s=starter();
+  if(!o||o.v!==2){try{const old=JSON.parse(localStorage.getItem('twiso1')||'null');if(old){if(old.m>s.m)s.m=Math.min(Math.round(old.m),30000);if(old.name)s.name=String(old.name).slice(0,12)}}catch(e){}return s}
+  for(const k in s)if(o[k]===undefined)o[k]=s[k];
+  for(const k of SLOTS.map(x=>x[0]))if(!(k in o.eq))o.eq[k]=null;
+  for(const k in o.inv)if(!IT[k]||!(o.inv[k]>0))delete o.inv[k];
+  for(const k in o.lm)if(!o.inv[k])delete o.lm[k];
+  for(const k in o.eq)if(o.eq[k]&&(!IT[o.eq[k]]||!o.inv[o.eq[k]]))o.eq[k]=null;
+  o.fish=(o.fish||[]).filter(f=>FISH[f.k]);
+  return o}
+let S=load();
+function save(){try{localStorage.setItem(SAVE,JSON.stringify(S))}catch(e){}}
+const has=id=>(S.inv[id]||0)>0;
+const eqI=k=>S.eq[k]&&has(S.eq[k])?IT[S.eq[k]]:null;
+function use(id,n=1){if(!id||!S.inv[id])return;S.inv[id]-=n;if(S.inv[id]<=0){delete S.inv[id];delete S.lm[id];for(const k in S.eq)if(S.eq[k]===id)S.eq[k]=null}}
+function useLine(id,m){if(!id||S.lm[id]==null)return;S.lm[id]=Math.max(0,Math.round((S.lm[id]-m)*100)/100);if(S.lm[id]<.3){delete S.inv[id];delete S.lm[id];for(const k in S.eq)if(S.eq[k]===id)S.eq[k]=null}}
+const capFish=()=>has('cooler')?20:10;
+
+/* =========================================================
+   環境：所有玩家共用時鐘（現實 1 分鐘＝遊戲 1 小時）
+   ========================================================= */
+const WXN=['晴','多雲','陰天','小雨','強風'];
+function env(){
+  const gt=Date.now()/60000, gh=gt%24, ph=gt/12.42*Math.PI*2;
+  const tide=(Math.sin(ph)+1)/2, rise=Math.cos(ph)>0, flow=Math.abs(Math.cos(ph));
+  const slot=Math.floor(gt/3), r=hash(slot), r2=hash(slot*7+3);
+  const month=new Date().getMonth()+1, monsoon=month>=10||month<=3;
+  let wx=r<.34?0:r<.56?1:r<.7?2:r<.84?3:4; if(monsoon&&r2<.22)wx=4;
+  const wind=Math.round(([2,3,4,5,11][wx]+r2*3)*10)/10;
+  const a=(gh-6)/12*Math.PI, el=Math.sin(a), L=clamp(el*1.6+.25,0,1), vis=L*(1-[0,.1,.35,.45,.35][wx]);
+  return{gh,tide,rise,flow,wx,wind,wdir:monsoon?'東北':'西南',wxn:wx===4?(monsoon?'東北季風':'西南強風'):WXN[wx],a,el,L,vis,dark:vis<.34,month,monsoon,
+    night:gh>=18.6||gh<5.4,dusk:(gh>=16.5&&gh<18.6)||(gh>=5.4&&gh<7.5),lvl:(tide-.5)};
+}
+function depthAt(sp,d,e){let x=d;if(sp.type==='canal')x=Math.min(d,Math.max(4,sp.wide-d));const v=(typeof CUR!=='undefined'&&sp===CUR&&sp.type!=='sand')?Math.sin(PX*.07+sp.d0*3)*.7:0;return Math.max(.3,sp.d0+sp.sl*x+(e.tide-.5)*sp.tr+v)}
+
+/* =========================================================
+   釣組分析
+   ========================================================= */
+function rig(){
+  const g=eqI, rod=g('rod'),reel=g('reel'),main=g('main'),leader=g('leader'),float=g('float'),stopper=g('stopper'),bead=g('bead'),swivel=g('swivel'),hook=g('hook'),bait=g('bait');
+  const sinks=['s1','s2','s3'].map(g).filter(Boolean), lure=!!(bait&&bait.cat==='lure');
+  const sinkG=sinks.reduce((a,s)=>a+s.g,0), E=[],W=[], ll=S.cfg.ll, tana=S.cfg.tana;
+  if(!rod)E.push(['rod','還沒裝上釣竿']); if(!reel)E.push(['reel','還沒裝上捲線器']); if(!main)E.push(['main','捲線器上沒有母線']);
+  if(main&&!((S.lm[main.id]||0)>5))E.push(['main','母線剩不到 5m，到釣具行補線']);
+  if(!bait)E.push(['bait','沒有餌或路亞，到釣具行補貨']);
+  if(!lure){
+    if(!float)E.push(['float','浮標釣需要浮標']); if(!leader)E.push(['leader','浮標釣需要子線']); if(!hook)E.push(['hook','浮標釣需要鉤']);
+    if(leader&&!((S.lm[leader.id]||0)>=ll))E.push(['leader',`子線只剩 ${f1(S.lm[leader.id]||0)}m，不夠綁 ${ll}m`]);
+    if(float&&sinkG>float.g*1.05)E.push(['s1',`鉛共 ${f2(sinkG)}g，超過浮標浮力 ${f1(float.g)}g，浮標會被拉沉`]);
+    else if(float&&sinkG<float.g*.35)W.push(['s1',`鉛只有浮力的 ${Math.round(sinkG/float.g*100)}%，浮標站不穩、餌下沉慢`]);
+    if(!stopper)W.push(['stopper','沒裝浮標止＝全遊動，餌會一路沉到底']);
+    else if(!bead)W.push(['bead','沒有止珠，浮標止容易被磨掉']);
+    if(stopper&&ll>tana)W.push(['leader','子線比棚還長，鉛會碰不到位置']);
+  }else{
+    if(main&&main.mat==='pe'&&!leader)W.push(['leader','PE 直綁路亞，魚看得到線，也容易被磨斷']);
+    if(float||sinks.length)W.push(['float','用路亞時，浮標和鉛不會用到']);
+  }
+  const cnt={};for(const k in S.eq){const id=S.eq[k];if(!id||!has(id))continue;if(lure&&['float','stopper','bead','s1','s2','s3','hook'].includes(k))continue;cnt[id]=(cnt[id]||0)+1}
+  for(const id in cnt)if(cnt[id]>(S.inv[id]||0))E.push([null,`「${IT[id].n}」只有 ${S.inv[id]} 個，不夠裝 ${cnt[id]} 個位置`]);
+  const parts=[];if(rod)parts.push(['rod',rod.kg,'竿子']);if(main)parts.push(['main',main.kg,'母線']);if(leader)parts.push(['leader',leader.kg,'子線']);
+  if(!lure&&hook)parts.push(['hook',hook.kg,'鉤']);if(swivel)parts.push(['swivel',swivel.kg,'轉環']);
+  if(main&&leader)parts.push(['knot',Math.round(Math.min(main.kg,leader.kg)*(swivel?.92:.85)*10)/10,'結點']);
+  parts.sort((a,b)=>a[1]-b[1]); const weak=parts[0]||['none',0,'—'], limit=weak[1];
+  if(main&&leader&&leader.kg>main.kg)W.push(['leader','子線比母線強，斷線時會從母線斷，整組都會損失']);
+  if(rod&&main&&main.kg>rod.kg*1.4)W.push(['rod','母線比竿子強太多，遇到大魚可能折竿']);
+  const onReel=reel&&main?Math.round(Math.min(S.lm[main.id]||0,reel.cap[1]*Math.pow(JP[reel.cap[0]][0]/main.d,2))):0;
+  if(reel&&main&&onReel<(S.lm[main.id]||0)-1)W.push(['main',`捲線器只裝得下 ${onReel}m 這種母線`]);
+  const drag=reel?Math.min(S.cfg.drag,reel.drag):0;
+  if(limit&&drag>limit*.75)W.push(['reel',`煞車 ${f1(drag)}kg 接近線組強度 ${f1(limit)}kg，衝擊一來就斷`]);
+  else if(limit&&drag<limit*.15)W.push(['reel','煞車太鬆，魚容易一路衝進障礙物']);
+  const wt=lure?bait.g:(float?float.g:0)+sinkG;
+  const rodFit=rod?(lure?(rod.lure?1:.72):(rod.lure?.85:1)):0;
+  const wf=clamp(.45+.55*Math.min(1,wt/(rod?rod.opt:10)),.4,1), lf=main?(main.mat==='pe'?1.12:1.1-main.no*.03):1;
+  const maxCast=rod?Math.round(rod.cast*rodFit*wf*lf):0;
+  return{rod,reel,main,leader,float,stopper,bead,swivel,hook,bait,sinks,sinkG,lure,E,W,weak,limit,onReel,drag,maxCast,wt,ll,tana,ok:!E.length};
+}
+
+/* =========================================================
+   音效（使用者互動後才會出聲）
+   ========================================================= */
+let AC=null;
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){AC=null}}if(AC&&AC.state==='suspended')AC.resume().catch(()=>{});return AC}
+function noiseBuf(a,d){const b=a.createBuffer(1,Math.floor(a.sampleRate*d),a.sampleRate),c=b.getChannelData(0);for(let i=0;i<c.length;i++)c[i]=Math.random()*2-1;return b}
+function sfx(k){if(!S.snd)return;const a=ac();if(!a)return;const t=a.currentTime;
+  try{
+    if(k==='click'){const o=a.createOscillator(),g=a.createGain();o.type='square';o.frequency.value=1900;g.gain.setValueAtTime(.025,t);g.gain.exponentialRampToValueAtTime(.0001,t+.03);o.connect(g).connect(a.destination);o.start(t);o.stop(t+.04);return}
+    const src=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();src.buffer=noiseBuf(a,.8);src.connect(f).connect(g).connect(a.destination);
+    if(k==='whoosh'){f.type='bandpass';f.Q.value=1.2;f.frequency.setValueAtTime(500,t);f.frequency.exponentialRampToValueAtTime(2600,t+.32);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.22,t+.12);g.gain.exponentialRampToValueAtTime(.0001,t+.4)}
+    else if(k==='splash'){f.type='lowpass';f.frequency.value=900;g.gain.setValueAtTime(.3,t);g.gain.exponentialRampToValueAtTime(.0001,t+.5)}
+    else if(k==='snap'){f.type='highpass';f.frequency.value=2500;g.gain.setValueAtTime(.35,t);g.gain.exponentialRampToValueAtTime(.0001,t+.12)}
+    else if(k==='bite'){f.type='lowpass';f.frequency.value=260;g.gain.setValueAtTime(.4,t);g.gain.exponentialRampToValueAtTime(.0001,t+.25)}
+    else if(k==='coin'){src.disconnect();const o=a.createOscillator(),gg=a.createGain();o.type='triangle';o.frequency.setValueAtTime(880,t);o.frequency.setValueAtTime(1320,t+.08);gg.gain.setValueAtTime(.08,t);gg.gain.exponentialRampToValueAtTime(.0001,t+.3);o.connect(gg).connect(a.destination);o.start(t);o.stop(t+.32);return}
+    src.start(t);src.stop(t+.8);
+  }catch(e){}
+}
+
+/* =========================================================
+   介面工具
+   ========================================================= */
+let toastT=0;
+function toast(t,ms=2400){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,ms)}
+let callT=0;
+function callout(t,ms=900){const e=$('#callout');e.textContent=t;e.hidden=false;e.style.animation='none';void e.offsetWidth;e.style.animation='';clearTimeout(callT);callT=setTimeout(()=>e.hidden=true,ms)}
+function feed(t){const f=$('#feed'),d=document.createElement('div');d.textContent=t;f.prepend(d);while(f.children.length>3)f.lastChild.remove();setTimeout(()=>d.remove(),9000)}
+const BANNER_SVG=`<svg class="bg" viewBox="0 0 400 120" preserveAspectRatio="xMaxYMax meet"><g fill="none" stroke="#cfe6ee" stroke-width="2" stroke-linecap="round">${[60,140,230,320].map((x,i)=>{const h=70+i*6,s=.8+i*.1;return `<line x1="${x}" y1="120" x2="${x}" y2="${120-h}"/><g transform="translate(${x} ${120-h}) scale(${s})"><line x1="0" y1="0" x2="0" y2="-26"/><line x1="0" y1="0" x2="23" y2="13"/><line x1="0" y1="0" x2="-23" y2="13"/></g>`}).join('')}</g><path d="M0 112 Q50 104 100 112 T200 112 T300 112 T400 112 V120 H0Z" fill="#38d6c6" opacity=".35"/></svg>`;
+
+let sheetKind=null, gearTab='rig', gearSlot=null, shopCat='rod', shopSub='iso', lastCatch=null;
+function curChips(){const r=rig(),c=[];
+  if(r.rod)c.push(r.rod.n);if(r.reel)c.push(r.reel.n);if(r.main)c.push(`${r.main.n}・${Math.round(S.lm[r.main.id]||0)}m`);
+  if(!r.lure){if(r.float)c.push(r.float.n);if(r.leader)c.push(`${r.leader.n}・${r.ll}m`);if(r.hook)c.push(r.hook.n)}
+  if(r.bait)c.push(r.bait.n+(r.bait.cat==='bait'?` ×${S.inv[r.bait.id]}`:''));
+  return `<div class="cur">${c.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`}
+function openSheet(kind){sheetKind=kind;if(kind==='gear'&&!gearTab)gearTab='rig';renderSheet();$('#sheet').hidden=false}
+function closeSheet(){$('#sheet').hidden=true;sheetKind=null;gearSlot=null}
+function renderSheet(){
+  if(!sheetKind)return; const el=$('#sheet');
+  let head='',tabs='',body='';
+  if(sheetKind==='shop'){
+    head=banner('彰濱釣具行','TACKLE SHOP・台61線旁',`錢包 $${S.m.toLocaleString()}。買的東西會放進物品欄，空著的位置會自動裝上。`);
+    const cat=SHOP.find(c=>c.k===shopCat)||SHOP[0]; if(!cat.subs.some(s=>s[0]===shopSub))shopSub=cat.subs[0][0];
+    tabs=`<div class="tabs">${SHOP.map(c=>`<button class="tab${c.k===cat.k?' on':''}" data-cat="${c.k}">${c.n}</button>`).join('')}</div>`+
+      (cat.subs.length>1?`<div class="subs">${cat.subs.map(s=>`<button class="sub${s[0]===shopSub?' on':''}" data-sub="${s[0]}">${s[1]}</button>`).join('')}</div>`:'');
+    body=shopSub==='float'?floatCards('shop'):shopSub==='market'?marketView():shopList(shopSub);
+  }else if(sheetKind==='gear'){
+    head=banner('釣組配置','RIG SETUP・裝備欄 ／ 物品欄','從竿尖到鉤一路排好你的釣組；點任何一格換裝。')+curChips();
+    tabs=`<div class="tabs">${[['rig','裝備欄（釣組）'],['inv','物品欄'],['tune','棚・子線・煞車'],['chum','誘餌桶']].map(([k,n])=>`<button class="tab${gearTab===k?' on':''}" data-gtab="${k}">${n}</button>`).join('')}</div>`;
+    body=gearTab==='rig'?rigView():gearTab==='inv'?invView():gearTab==='chum'?chumView():tuneView();
+  }else if(sheetKind==='basket'){
+    head=banner('我的魚簍','CREEL・個人紀錄',`魚簍 ${S.fish.length}/${capFish()}。賣魚請到釣具行的「魚市」。`);
+    body=basketView();
+  }else if(sheetKind==='result'){
+    head=banner('上岸了！','CATCH',lastCatch?`${spotById(lastCatch.sp)?.n||''}・${lastCatch.t}`:'');
+    body=resultView();
+  }else if(sheetKind==='friends'){
+    head=banner('釣友','ONLINE・一起釣魚','看大家在哪個釣點、正在做什麼；喊話會出現在你頭上的名牌。');
+    body=friendsView();
+  }else if(sheetKind==='help'){
+    head=banner('玩法說明','HOW TO FISH','磯釣的節奏：配好釣組、看潮水、拋竿、盯浮標、揚竿、搏魚。');
+    body=helpView();
+  }
+  el.innerHTML=`<div class="sc" role="dialog" aria-modal="true">${head}${tabs}<div class="sb" id="sb">${body}</div></div>`;
+}
+function banner(t,kick,p){return `<div class="banner">${BANNER_SVG}<button class="x" data-close aria-label="關閉">×</button><span class="kick">${esc(kick)}</span><h2>${esc(t)}</h2><p>${esc(p)}</p></div>`}
+const specs=a=>`<div class="specs">${a.map(s=>`<span>${esc(s)}</span>`).join('')}</div>`;
+function shopList(sub){
+  const items=Object.values(IT).filter(i=>i.sub===sub); let h='',g0='';
+  for(const i of items){
+    if(i.grp!==g0){g0=i.grp;h+=`<div class="gh">${esc(g0)}</div>`}
+    const own=S.inv[i.id]||0, lm=i.m?S.lm[i.id]||0:0;
+    let ownTxt=i.m?(own?`<span class="owned">剩 ${f1(lm)}m</span>`:''):own?`<span class="owned">持有 ${own}</span>`:'';
+    const btn=i.uniq&&own?`<button class="buy" disabled>已擁有</button>`:`<button class="buy" data-buy="${i.id}"${S.m<i.p?' disabled':''}>$${i.p}${i.m?` +${i.m}m`:''}</button>`;
+    h+=`<div class="it"><div><h4>${esc(i.n)} ${ownTxt}</h4>${i.desc?`<p>${esc(i.desc)}</p>`:''}${specs(i.spec||[])}</div>${btn}</div>`;
+  }
+  return h||'<div class="empty">這一區目前沒有商品</div>';
+}
+function floatCards(mode){
+  const cur=eqI('float'); let h=`<div class="msgs"><div class="ok">目前浮標：${cur?esc(cur.n):'未裝備'}。浮標決定吃餌訊號多清楚、抗不抗浪；錢數越大越重、拋得越遠，鉛也要跟著加重。夜裡或陰雨天光線暗時，只有電子阿波和電子浮標看得清楚；一般浮標要靠頭燈。</div></div><div class="fc">`;
+  for(const ty in FT){const T=FT[ty];
+    const sd=T.sens>=90?'頂尖':T.sens>=80?'均衡':T.sens>=70?'鈍但真實':'遲鈍', wd=T.wave>=90?'不動如山':T.wave>=75?'穩定':T.wave>=60?'普通':'易搖晃';
+    const chips=T.sizes.map(q=>{const id=`fl_${ty}_${sid(q)}`,it=IT[id],own=S.inv[id]||0;
+      if(mode==='shop')return `<button data-buy="${id}" class="${own?'have':''}"${S.m<it.p?' disabled':''}>${q}錢 $${it.p}${own?` ・有${own}`:''}</button>`;
+      return own?`<button data-eq="${id}" data-slot="float" class="${cur&&cur.id===id?'on':''}">${q}錢${own>1?` ×${own}`:''}</button>`:''}).join('');
+    h+=`<div class="fcard${cur&&cur.ty===ty?' on':''}"><div class="hd"><b>【${T.n}】</b><span style="color:${T.tc};border-color:${T.tc}">${T.tag}</span></div><p>${T.desc}</p>
+      <div class="st"><span>訊號敏銳度</span><b style="color:#7fe7dc">${T.sens}%（${sd}）</b></div>
+      <div class="st"><span>抗浪・水流</span><b style="color:#ffc977">${T.wave}%（${wd}）</b></div>
+      <div class="st"><span>特色標目</span><b style="color:${T.tc}">${T.feat}</b></div>
+      <div class="sizes">${chips||'<span style="font:500 12px var(--f-body);color:var(--mute)">還沒有這種浮標，到釣具行購買</span>'}</div></div>`}
+  return h+'</div>';
+}
+function marketView(){
+  if(!S.fish.length)return '<div class="empty">魚簍是空的。釣到魚之後再來，這裡依重量收購。</div>';
+  const tot=S.fish.reduce((a,f)=>a+f.v,0);
+  return `<div class="msgs"><div class="ok">魚販收購價依魚種和重量計算，河豚不收。</div></div>`+S.fish.map((f,i)=>`<div class="it"><div><h4>${esc(FISH[f.k].n)} <small>${f2(f.w)}kg・${f.L}cm</small></h4><p>${esc(spotById(f.sp)?.n||'')}</p></div><button class="buy" data-sell="${i}">賣 $${f.v}</button></div>`).join('')+
+    `<p><button class="go" data-sellall style="width:100%">全部賣出 $${tot.toLocaleString()}</button></p>`;
+}
+function rigIcon(k,it){
+  const s=(p)=>`<svg viewBox="0 0 34 34">${p}</svg>`;
+  switch(k){
+    case 'rod':return s('<path d="M17 32 L17 2" stroke="#d6c7b8" stroke-width="3" stroke-linecap="round"/><circle cx="17" cy="24" r="4" fill="#c8ccd0"/>');
+    case 'reel':return s('<circle cx="17" cy="17" r="9" fill="#2a3c4c" stroke="#c8ccd0" stroke-width="2"/><path d="M17 8v18" stroke="#c8ccd0"/><circle cx="17" cy="17" r="2.5" fill="#ffb447"/>');
+    case 'main':return s('<path d="M17 2v30" stroke="#9fd2ea" stroke-width="2"/><path d="M11 10h12M11 16h12M11 22h12" stroke="#9fd2ea" stroke-width="1" opacity=".5"/>');
+    case 'stopper':return s('<path d="M17 2v30" stroke="#9fd2ea"/><rect x="12" y="14" width="10" height="5" rx="2" fill="#ffb447"/>');
+    case 'bead':return s('<path d="M17 2v30" stroke="#9fd2ea"/><circle cx="17" cy="17" r="4" fill="#ff6450"/>');
+    case 'float':{const ty=it?it.ty:'abo';const c='#ff4b2b';
+      if(ty==='abo'||ty==='eabo')return s(`<path d="M17 2v30" stroke="#9fd2ea"/>${ty==='eabo'?'<circle cx="17" cy="8" r="6" fill="#ff4a2a" opacity=".35"/>':''}<circle cx="17" cy="18" r="9" fill="#ff4b2b"/><path d="M8 18h18" stroke="#111" stroke-width="2"/><circle cx="17" cy="${ty==='eabo'?8:12}" r="3" fill="${ty==='eabo'?'#ffd0c4':'#ffd34a'}"/>`);
+      if(ty==='cone')return s(`<path d="M17 2v30" stroke="#9fd2ea"/><path d="M8 9h18L17 28z" fill="${c}"/><path d="M8 9h18" stroke="#ffd34a" stroke-width="3"/>`);
+      if(ty==='long')return s('<path d="M17 2v30" stroke="#9fd2ea"/><rect x="14" y="2" width="6" height="6" fill="#ff3b30"/><rect x="14" y="8" width="6" height="6" fill="#ffd34a"/><rect x="14" y="14" width="6" height="6" fill="#111"/><rect x="13" y="20" width="8" height="9" rx="3" fill="#ff7b2e"/>');
+      if(ty==='short')return s('<path d="M17 2v30" stroke="#9fd2ea"/><rect x="13" y="6" width="8" height="8" fill="#ff8a1f"/><rect x="12" y="14" width="10" height="13" rx="4" fill="#ff4b2b"/>');
+      return s('<path d="M17 2v30" stroke="#9fd2ea"/><circle cx="17" cy="6" r="6" fill="#d4ff6a" opacity=".4"/><rect x="15.5" y="2" width="3" height="8" fill="#d4ff6a"/><rect x="13" y="9" width="8" height="18" rx="4" fill="#ff4b2b"/>')}
+    case 'swivel':return s('<path d="M17 2v8M17 24v8" stroke="#9fd2ea"/><ellipse cx="17" cy="13" rx="3.5" ry="4" fill="none" stroke="#c8ccd0" stroke-width="2"/><ellipse cx="17" cy="21" rx="3.5" ry="4" fill="none" stroke="#c8ccd0" stroke-width="2"/>');
+    case 'leader':return s('<path d="M17 2v30" stroke="#7be3a2" stroke-width="2"/>');
+    case 'sinker':return s('<path d="M17 2v30" stroke="#7be3a2"/><circle cx="17" cy="11" r="4" fill="#9aa3a8"/><circle cx="17" cy="21" r="3" fill="#9aa3a8"/>');
+    case 'hook':return s('<path d="M17 2v20 a6 6 0 1 1 -10 -2" fill="none" stroke="#d8dde2" stroke-width="2.4" stroke-linecap="round"/><path d="M7 20l-2 -4" stroke="#d8dde2" stroke-width="2"/>');
+    case 'bait':return it&&it.cat==='lure'?s('<path d="M17 2v8" stroke="#7be3a2"/><path d="M8 18c4-8 14-8 18 0-4 8-14 8-18 0z" fill="#5fc3e6"/><circle cx="21" cy="17" r="1.6" fill="#111"/><path d="M8 18l-4-3v6z" fill="#5fc3e6"/>'):s('<path d="M17 2v12" stroke="#7be3a2"/><path d="M11 20c2-7 10-7 12 0-2 7-10 7-12 0z" fill="#ff8f8a"/><path d="M12 19c3 1 7 1 10 0" stroke="#fff" stroke-width="1" opacity=".6"/>');
+  }return s('')}
+function rigView(){
+  const r=rig(); const L=r.lure;
+  const sumv=`<div class="sum">
+    <div><small>線組強度</small><b>${r.limit?f1(r.limit):'—'}</b><em>kg・最弱：${r.weak[2]}</em></div>
+    <div><small>最遠拋投</small><b>${r.maxCast||'—'}</b><em>m</em></div>
+    <div><small>煞車力</small><b>${f1(r.drag)}</b><em>kg</em></div>
+    <div><small>${L?'路亞重量':'鉛／浮力'}</small><b>${L?(r.bait?r.bait.g:0):f2(r.sinkG)}</b><em>${L?'g':`／${r.float?f1(r.float.g):'—'} g`}</em></div></div>`;
+  const msgs=`<div class="msgs">${r.E.map(m=>`<div class="e">${esc(m[1])}</div>`).join('')}${r.W.map(m=>`<div class="w">${esc(m[1])}</div>`).join('')}${r.ok&&!r.W.length?'<div class="ok">釣組完整，可以拋竿了。</div>':''}</div>`;
+  const row=(slot,label,it,sub,cls='')=>`<button class="rr ${cls}" data-pick="${slot}"><span class="ic">${rigIcon(slot==='s1'?'sinker':slot,it)}</span><span class="tx"><small>${label}</small>${it?`<b>${esc(it.n)}</b>`:`<b class="miss">未裝備・點此選擇</b>`}${sub?`<i>${esc(sub)}</i>`:''}</span><span class="ar">›</span></button>`;
+  let rows='';
+  rows+=row('rod','釣竿',r.rod,r.rod?`${r.rod.len}m・負荷 ${r.rod.kg}kg・遠投約 ${r.rod.cast}m`:'');
+  rows+=row('reel','捲線器',r.reel,r.reel?`${r.reel.lever?'手煞車':'紡車'}・齒輪比 ${r.reel.ratio}・煞車設定 ${f1(r.drag)}／${r.reel.drag}kg`:'');
+  rows+=row('main','母線（道線）',r.main,r.main?`${r.main.lb}lb（${r.main.kg}kg）・剩 ${f1(S.lm[r.main.id]||0)}m・捲線器上 ${r.onReel}m`:'');
+  if(!L){
+    rows+=row('stopper','浮標止',r.stopper,r.stopper?`棚 ${r.tana}m（浮標到鉤的深度）・剩 ${S.inv[r.stopper.id]} 個`:'不裝＝全遊動');
+    rows+=row('bead','止珠',r.bead,r.bead?`剩 ${S.inv[r.bead.id]} 顆`:'');
+    rows+=row('float','浮標',r.float,r.float?`浮力 ${f1(r.float.g)}g・敏銳 ${r.float.sens}%・抗浪 ${r.float.wave}%`:'');
+    rows+=row('swivel','轉環',r.swivel,r.swivel?`耐拉 ${r.swivel.kg}kg・剩 ${S.inv[r.swivel.id]} 個`:'不裝＝母線直接綁子線（結點較弱）');
+    rows+=row('leader','子線',r.leader,r.leader?`${r.leader.lb}lb（${r.leader.kg}kg）・綁 ${r.ll}m・剩 ${f1(S.lm[r.leader.id]||0)}m`:'','leader');
+    const sk=['s1','s2','s3'].map(k=>eqI(k));
+    rows+=`<button class="rr leader" data-pick="s1"><span class="ic">${rigIcon('sinker')}</span><span class="tx"><small>鉛（3 個位置）</small><b>${sk.filter(Boolean).map(s=>esc(s.n)).join('＋')||'<span style="color:var(--mute)">沒有鉛</span>'}</b><i>合計 ${f2(r.sinkG)}g${r.float?`・浮力的 ${Math.round(r.sinkG/r.float.g*100)}%`:''}</i></span><span class="ar">›</span></button>`;
+    rows+=row('hook','鉤',r.hook,r.hook?`${CL[r.hook.cls]}・耐拉 ${r.hook.kg}kg・剩 ${S.inv[r.hook.id]} 支`:'','leader');
+  }else rows+=row('leader','子線（選配）',r.leader,r.leader?`${r.leader.lb}lb・剩 ${f1(S.lm[r.leader.id]||0)}m`:'路亞可不裝','leader');
+  rows+=row('bait','餌／路亞',r.bait,r.bait?(r.bait.cat==='bait'?`剩 ${S.inv[r.bait.id]} 份`:`${r.bait.g}g・${r.bait.desc||''}`):'','leader');
+  return sumv+msgs+`<div class="rig">${rows}</div>`;
+}
+function invView(){
+  let h='';
+  if(gearSlot){const sl=SLOTS.find(s=>s[0]===gearSlot);const cur=eqI(gearSlot);
+    h+=`<div class="msgs"><div class="ok">選擇要裝在「${sl[1]}」的物品。目前：${cur?esc(cur.n):'未裝備'}</div></div><div class="row2" style="margin-bottom:6px">${cur?`<button class="ghost" data-un="${gearSlot}">卸下</button>`:''}<button class="ghost" data-allinv>顯示全部物品</button>${['s1','s2','s3'].includes(gearSlot)?['s1','s2','s3'].map(k=>`<button class="ghost${k===gearSlot?' ':''}" data-slotsel="${k}" style="${k===gearSlot?'border-color:var(--tide);color:var(--tide)':''}">鉛${k[1]}</button>`).join(''):''}</div>`;
+    if(gearSlot==='float')return h+floatCards('gear');
+  }
+  const cats=gearSlot?SLOTS.find(s=>s[0]===gearSlot)[2]:['rod','reel','main','leader','float','stopper','bead','swivel','sinker','hook','bait','lure','chumi','misc'];
+  for(const c of cats){
+    const items=Object.values(IT).filter(i=>i.cat===c&&has(i.id)); if(!items.length)continue;
+    h+=`<div class="gh">${CAT_N[c]}</div>`;
+    for(const i of items){
+      const slots=Object.keys(S.eq).filter(k=>S.eq[k]===i.id);
+      const amt=i.m?`剩 ${f1(S.lm[i.id]||0)}m`:i.uniq?'':`×${S.inv[i.id]}`;
+      let btn='';
+      if(c==='misc')btn='<small class="owned">已生效</small>';else if(c==='chumi')btn='<button class="buy" data-gtab="chum">去調配</button>';
+      else if(gearSlot)btn=S.eq[gearSlot]===i.id?'<button class="buy eq" disabled>已裝備</button>':`<button class="buy" data-eq="${i.id}" data-slot="${gearSlot}">裝上</button>`;
+      else btn=slots.length?`<button class="buy eq" data-eq="${i.id}">已裝備</button>`:`<button class="buy" data-eq="${i.id}">裝上</button>`;
+      h+=`<div class="it"><div><h4>${esc(i.n)} <small>${amt}</small></h4>${specs(i.spec||[])}</div>${btn}</div>`;
+    }
+  }
+  return h||`<div class="empty">物品欄沒有這類東西。<br>到「釣具行」購買後會出現在這裡。</div>`;
+}
+function tuneView(){
+  const r=rig(), sp=CUR, e=env(), d=sp?Math.round((r.maxCast||30)*.7):30, dep=sp?depthAt(sp,d,e):null;
+  const sl=(k,label,val,unit,min,max,step,p)=>`<div class="slider"><div class="lab"><b>${label}</b><span>${val}${unit}</span></div><div class="stp"><button data-step="${k}:-${step}" aria-label="減少">−</button><input type="range" id="rg_${k}" data-rg="${k}" min="${min}" max="${max}" step="${step}" value="${val}"><button data-step="${k}:${step}" aria-label="增加">＋</button></div><p>${p}</p></div>`;
+  return `<div class="slider"><div class="lab"><b>咬餌輔助</b><button class="ghost" data-assist style="height:40px">${S.assist?'開・有提示':'關・全靠自己'}</button></div><p>開：魚真正咬餌時跳出「揚竿！」、按鈕發亮並震動，水下視窗看得到魚影。關：沒有任何提示，只能自己盯浮標判斷，賣魚收入 +15%。</p></div>`+sl('tana','棚（浮標止到鉤的深度）',S.cfg.tana,' m',.5,12,.5,dep?`目前 ${sp.n} 拋 ${d}m 處水深約 ${f1(dep)}m。棚比水深深，鉛會躺在底部，消波塊區容易掛底。`:'進入釣位後會顯示拋投點的水深。黑鯛、石斑貼底；烏魚、臭肚在中上層。')+
+    sl('ll','子線長度',S.cfg.ll,' m',.5,5,.25,'子線越長餌越自然，但風浪大時不好控制；不能比棚長。斷線時會損失這段長度。')+
+    sl('drag','煞車力（前煞車設定）',S.cfg.drag,' kg',.3,r.reel?r.reel.drag:4,.1,`建議設在線組強度 ${r.limit?f1(r.limit):'—'}kg 的 1/4–1/2。太緊會斷線，太鬆魚會鑽進障礙物。捲線器上限 ${r.reel?r.reel.drag:'—'}kg。`);
+}
+function basketView(){
+  let h=`<div class="name"><input id="nameIn" maxlength="12" value="${esc(S.name)}" aria-label="暱稱"><button class="ghost" data-rename>改暱稱</button></div>`;
+  h+=`<div class="sum"><div><small>累計釣獲</small><b>${S.total}</b><em>尾</em></div><div><small>魚簍</small><b>${S.fish.length}</b><em>／${capFish()}</em></div><div><small>魚簍價值</small><b>$${S.fish.reduce((a,f)=>a+f.v,0).toLocaleString()}</b></div></div>`;
+  h+=S.fish.length?`<div class="gh">魚簍</div>`+S.fish.map(f=>`<div class="it"><div><h4>${esc(FISH[f.k].n)} <small>${f2(f.w)}kg・${f.L}cm</small></h4><p>${esc(spotById(f.sp)?.n||'')}・約 $${f.v}</p></div></div>`).join(''):'<div class="empty">還沒有魚。到釣點拋竿吧。</div>';
+  const best=Object.keys(S.best);
+  if(best.length)h+=`<div class="gh">個人最大尾紀錄</div>`+best.map(k=>`<div class="it"><div><h4>${esc(FISH[k].n)} <small>${f2(S.best[k].w)}kg・${S.best[k].L}cm</small></h4><p>${esc(spotById(S.best[k].sp)?.n||'')}</p></div></div>`).join('');
+  return h;
+}
+function fishSVG(k){const c=FISH[k].col,long=k==='tachiuo';
+  return long?`<svg viewBox="0 0 300 80"><path d="M10 40 C60 18 220 22 285 38 C220 52 60 62 10 40z" fill="${c}"/><path d="M40 30 Q150 14 270 34" stroke="#fff" stroke-width="2" fill="none" opacity=".6"/><circle cx="270" cy="37" r="3" fill="#111"/></svg>`
+  :`<svg viewBox="0 0 300 140"><path d="M40 70 C80 10 210 10 250 60 C210 120 80 130 40 70z" fill="${c}"/><path d="M45 70 L5 35 L15 70 L5 105z" fill="${c}"/><path d="M120 22 Q160 2 200 28" fill="${c}" opacity=".85"/><circle cx="225" cy="58" r="6" fill="#111"/><circle cx="227" cy="56" r="2" fill="#fff"/><path d="M80 75 Q150 85 235 72" stroke="#fff" stroke-width="2" fill="none" opacity=".35"/></svg>`}
+function resultView(){
+  const c=lastCatch; if(!c)return '';
+  const F0=FISH[c.k], full=S.fish.length>=capFish();
+  return `<div class="fishcard">${fishSVG(c.k)}<h3>${esc(F0.n)}<small style="font:500 14px var(--f-body);color:var(--mute);margin-left:8px">${esc(F0.al)}</small></h3>
+    <div class="big">${f2(c.w)}<small>kg</small>　${c.L}<small>cm</small></div>${c.rec?'<span class="rec">個人新紀錄</span>':''}
+    <div class="kv"><span>收購價<b>${F0.junk?'不收購':'$'+c.v}</b></span><span>咬餌方式<b>${BITE_N[F0.bite]}</b></span><span>搏魚時間<b>${Math.round(c.ft)}s</b></span>${c.self&&!F0.junk?'<span>自力加成<b>+15%</b></span>':''}</div>
+    ${F0.junk?'<p style="margin:0;color:var(--mute);font-size:13px">河豚有毒，放回海裡吧。</p>':''}
+    <div class="row2" style="width:100%">${F0.junk||full?'':'<button class="go" data-keep>放入魚簍</button>'}<button class="ghost" data-release style="${F0.junk||full?'flex:1':''}">${full&&!F0.junk?'魚簍滿了，放流':'放流'}</button></div></div>`;
+}
+function helpView(){return `<div class="slider"><div class="lab"><b>咬餌輔助</b><button class="ghost" data-assist style="height:40px">${S.assist?'開・有提示':'關・全靠自己'}</button></div><p>開：魚真正咬餌時跳出「揚竿！」、按鈕發亮並震動，水下視窗看得到魚影。關：沒有任何提示，只能自己盯浮標判斷，賣魚收入 +15%。</p></div>`+`<div class="help">
+  <h4>1. 配釣組</h4><p>「裝備」裡從上到下排：竿、捲線器、母線、浮標止、止珠、浮標、轉環、子線、鉛、鉤、餌。鉛的總重要在浮標浮力的 60–100%，浮標才會站好又敏感。</p>
+  <h4>2. 看水況</h4><p>彰化海岸潮差約 3.6m。漲退潮中段水流最強、魚口最好，平潮時魚比較懶。棚要配合水深：拋越遠越深；退潮時同一個位置會變淺。</p>
+  <h4>3. 拋竿</h4><ul><li>左右滑動畫面調整方向。</li><li>按住「拋竿」蓄力，力道條擺到想要的距離時放開。</li><li>浮標釣要等餌沉到棚位，水下視窗會顯示。</li></ul>
+  <h4>4. 揚竿時機</h4><p>小魚試探時浮標只會輕點，這時揚竿會空竿、餌被吃掉。等畫面跳出「揚竿」、浮標真正沉下去再按。各魚咬法不同：黑鯛慢慢沉、鱸魚一口氣消失、午仔橫向拖走、白帶會讓浮標停頓上浮。</p>
+  <h4>5. 搏魚</h4><ul><li>按住「收線」把魚拉近；魚衝的時候張力會升高，超過煞車力就出線。</li><li>張力條變紅就放手；手煞車捲線器可以按住「放線」瞬間洩力。</li><li>線組最弱的那一段會先斷：母線斷損失整組，子線斷損失子線、鉛和鉤。</li><li>消波塊釣點魚會往塊體裡鑽，靠近岸邊時碳纖維子線比較耐磨。</li><li>1.5kg 以上的魚沒有撈網，拉上堤防時可能掉。</li></ul>
+  <h4>撒餌</h4><p>到「裝備 → 誘餌桶」用南極蝦冷凍塊和集魚粉調一桶（材料在釣具行的「撒餌」分類）。在釣位按「撒餌」拿起杓子，左右滑動瞄準、按住「撒出」蓄力，或按「對準浮標」一鍵撒到浮標附近。撒餌雲會隨潮流漂、慢慢下沉，餌要在雲的位置和深度裡才有效。</p>
+  <h4>6. 補貨</h4><p>母線、子線用公尺計算，斷線就會變短，用完要到釣具行補一捲。鉤、鉛、浮標止、轉環也會在斷線時消耗。</p>
+  <h4>風與理線</h4><p>風會把母線吹成一個弧（PE 線特別明顯），浮標被拖著跑、魚訊變少、揚竿也刺不太到魚。等魚時看「母線弧度」，偏高就按「理線」收掉多餘的線；線已經直了還一直收，會把浮標拉近。</p>
+  <h4>鍵盤</h4><p>空白鍵＝主按鈕，B＝放線／次要按鈕，R＝理線，A／D＝沿堤走動，左右方向鍵＝調整方向。</p></div>`}
+
+/* 物品操作 */
+function busy(){return F.st!=='idle'}
+function buy(id){const it=IT[id];if(!it)return;
+  if(it.uniq&&has(id))return toast('已經擁有了');
+  if(S.m<it.p)return toast('錢不夠，先去釣魚或把魚賣掉');
+  S.m-=it.p;
+  if(it.m){S.inv[id]=1;S.lm[id]=Math.round(((S.lm[id]||0)+it.m)*100)/100;toast(`${it.n} 補了 ${it.m}m，現在有 ${f1(S.lm[id])}m`)}
+  else{S.inv[id]=(S.inv[id]||0)+(it.pack||1);toast(`已放入物品欄：${it.n}${(it.pack||1)>1?' ×'+it.pack:''}`)}
+  const sl=CAT_SLOT[it.cat];if(sl&&!S.eq[sl]&&!busy())S.eq[sl]=id;
+  if(id==='vest'&&G.spot)refreshPlayer();
+  save();sfx('coin');renderSheet();
+}
+function equip(id,slot){const it=IT[id];if(!it||!has(id))return;
+  if(busy())return toast('先收竿再換裝備');
+  if(!slot){if(it.cat==='sinker')slot=['s1','s2','s3'].find(k=>!S.eq[k])||'s1';else slot=CAT_SLOT[it.cat]}
+  if(!slot)return; const sl=SLOTS.find(s=>s[0]===slot); if(!sl||!sl[2].includes(it.cat))return toast('這個位置裝不下這種東西');
+  S.eq[slot]=id;save();if(slot==='float'||slot==='rod'||slot==='bait')refreshRig3D();toast(`${sl[1]}：${it.n}`,1400);
+}
+
+/* =========================================================
+   3D 場景
+   ========================================================= */
+const G={map:null,spot:null}; let R=null, has3D=false, mode='map', CUR=null;
+const WV=`uniform float uT,uAmp;varying vec3 vW;varying vec3 vN;varying float vH;
+float h(vec2 p){return uAmp*(sin(p.x*.12+uT*1.1)*.5+sin(p.y*.17+uT*1.4)*.35+sin((p.x+p.y)*.33+uT*2.3)*.15+sin((p.x-p.y*.6)*.71+uT*3.1)*.07);}
+void main(){vec4 w=modelMatrix*vec4(position,1.);float e=.6;float hh=h(w.xz);float hx=h(w.xz+vec2(e,0.));float hz=h(w.xz+vec2(0.,e));w.y+=hh;vH=hh;vN=normalize(vec3(hh-hx,e,hh-hz));vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`;
+const WF=`uniform vec3 uDeep,uShal,uSky,uSun,uFog,uSunDir;uniform float uFogN,uFogF,uAmp,uFoam;varying vec3 vW;varying vec3 vN;varying float vH;
+void main(){vec3 V=normalize(cameraPosition-vW);vec3 N=normalize(vN);float fr=pow(1.-max(dot(N,V),0.),3.);vec3 c=mix(uDeep,uShal,clamp(.25+.6*N.y*(1.-fr),0.,1.));c=mix(c,uSky,fr*.65);
+vec3 R=reflect(-uSunDir,N);float sp=pow(max(dot(R,V),0.),140.);c+=uSun*sp*1.5;float fo=smoothstep(.55,.95,vH/max(uAmp,.01))*uFoam;c=mix(c,vec3(.92,.96,.97),fo*.55);
+float d=length(cameraPosition-vW);gl_FragColor=vec4(mix(c,uFog,smoothstep(uFogN,uFogF,d)),1.);}`;
+const SV=`varying vec3 vD;void main(){vD=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
+const SF=`uniform vec3 uTop,uHor,uSunC,uSunDir;varying vec3 vD;void main(){float y=vD.y;vec3 c=mix(uHor,uTop,smoothstep(0.,.55,y));if(y<0.)c=uHor*.85;float s=max(dot(vD,uSunDir),0.);c+=uSunC*(pow(s,900.)*4.+pow(s,10.)*.35);gl_FragColor=vec4(c,1.);}`;
+function waveH(x,z,t,a){return a*(Math.sin(x*.12+t*1.1)*.5+Math.sin(z*.17+t*1.4)*.35+Math.sin((x+z)*.33+t*2.3)*.15+Math.sin((x-z*.6)*.71+t*3.1)*.07)}
+function waterMat(){const T=THREE;return new T.ShaderMaterial({uniforms:{uT:{value:0},uAmp:{value:.3},uDeep:{value:new T.Color('#14393f')},uShal:{value:new T.Color('#4c7d70')},uSky:{value:new T.Color('#a9c9d6')},uSun:{value:new T.Color('#fff1cf')},uSunDir:{value:new T.Vector3(0,1,0)},uFog:{value:new T.Color('#a9c9d6')},uFogN:{value:300},uFogF:{value:3800},uFoam:{value:.4}},vertexShader:WV,fragmentShader:WF})}
+function skyMat(){const T=THREE;return new T.ShaderMaterial({uniforms:{uTop:{value:new T.Color('#2f74c9')},uHor:{value:new T.Color('#bcdcef')},uSunC:{value:new T.Color('#fff2d0')},uSunDir:{value:new T.Vector3(0,1,0)}},vertexShader:SV,fragmentShader:SF,side:T.BackSide,depthWrite:false,fog:false})}
+const lam=c=>new THREE.MeshLambertMaterial({color:c});
+function disposeScene(sc){sc.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose())}})}
+function glowTex(col){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,col);g.addColorStop(.35,col.replace(/[\d.]+\)$/,'.45)'));g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);return new THREE.CanvasTexture(c)}
+function makeTurbine(scale,glow){const T=THREE,g=new T.Group(),w=lam('#e9eef0');
+  const tw=new T.Mesh(new T.CylinderGeometry(.22,.42,10,8),w);tw.position.y=5;g.add(tw);
+  const na=new T.Mesh(new T.BoxGeometry(.7,.6,1.6),w);na.position.set(0,10.1,.2);g.add(na);
+  const rot=new T.Group();rot.position.set(0,10.1,-.75);g.add(rot);
+  rot.add(new T.Mesh(new T.SphereGeometry(.32,10,8),w));
+  for(let i=0;i<3;i++){const b=new T.Mesh(new T.BoxGeometry(.32,5.6,.06),w);b.position.y=2.8;const p=new T.Group();p.rotation.z=i*Math.PI*2/3;p.add(b);rot.add(p)}
+  let light=null;if(glow){light=new T.Sprite(new T.SpriteMaterial({map:glow,color:0xff3a2a,blending:T.AdditiveBlending,depthWrite:false,transparent:true}));light.position.set(0,10.6,.2);light.scale.setScalar(2.2);g.add(light)}
+  g.scale.setScalar(scale);g.rotation.y=.35;return{g,rot,light,ph:Math.random()*6}}
+function mergeGeos(list){const pos=[],nor=[];for(const g0 of list){const g=g0.index?g0.toNonIndexed():g0;pos.push(...g.attributes.position.array);nor.push(...g.attributes.normal.array)}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));return g}
+function tetrapodGeo(){const T=THREE,up=new T.Vector3(0,1,0),dirs=[new T.Vector3(0,1,0)];for(let i=0;i<3;i++){const a=i*Math.PI*2/3;dirs.push(new T.Vector3(Math.sqrt(8/9)*Math.cos(a),-1/3,Math.sqrt(8/9)*Math.sin(a)))}
+  return mergeGeos(dirs.map(d=>{const g=new T.CylinderGeometry(.24,.46,1.3,7);g.translate(0,.65,0);g.applyMatrix4(new T.Matrix4().makeRotationFromQuaternion(new T.Quaternion().setFromUnitVectors(up,d.normalize())));return g}))}
+
+function init3D(){
+  if(!window.THREE)return false;
+  try{R=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'})}catch(e){R=null;return false}
+  if(!R||!R.getContext())return false;
+  R.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));
+  $('#stage').appendChild(R.domElement);
+  G.glowR=glowTex('rgba(255,70,50,1)');G.glowY=glowTex('rgba(255,236,150,1)');G.glowW=glowTex('rgba(255,255,255,1)');
+  buildMap();return true;
+}
+
+/* ---------- 3D 地圖：彰濱工業區（線西區、崙尾區、鹿港區） ---------- */
+const MAP_LAND={
+  main:[[9,-75],[9.6,-38],[9.6,38],[4.6,41],[3.1,52],[1.9,75],[70,75],[70,-75]],
+  sand:[[4.6,41],[3.1,52],[1.9,75],[.2,75],[1.6,52],[3.2,41]],
+  xianxi:[[-14,-36],[-12,-38],[9.7,-38],[9.7,-16],[-14,-16]],
+  lunwei:[[-14,-12.8],[9.7,-12.8],[9.7,9.8],[-14,9.8]],
+  lukang:[[-14,13.4],[9.7,13.4],[9.7,38],[-12,38],[-14,36]]
+};
+function landMesh(pts,h,color,y0=0){const T=THREE,s=new T.Shape();pts.forEach((p,i)=>i?s.lineTo(p[0],-p[1]):s.moveTo(p[0],-p[1]));const g=new T.ExtrudeGeometry(s,{depth:h,bevelEnabled:false});g.rotateX(-Math.PI/2);const m=new T.Mesh(g,lam(color));m.position.y=y0;return m}
+function buildMap(){
+  const T=THREE,sc=new T.Scene(),cam=new T.PerspectiveCamera(40,1,1,3000);cam.position.set(-2,innerHeight>innerWidth?165:108,(innerHeight>innerWidth?165:108)*.62+4);cam.lookAt(-2,0,4);
+  sc.background=new T.Color('#071a28');sc.fog=new T.Fog('#071a28',170,420);
+  sc.add(new T.HemisphereLight(0xcfe6ff,0x203040,.85));const dl=new T.DirectionalLight(0xfff0d8,.75);dl.position.set(-40,80,30);sc.add(dl);
+  const wm=waterMat();wm.uniforms.uAmp.value=.08;wm.uniforms.uDeep.value.set('#0b2f3c');wm.uniforms.uShal.value.set('#1f5a63');wm.uniforms.uSky.value.set('#3b6d84');wm.uniforms.uFog.value.set('#071a28');wm.uniforms.uFogN.value=170;wm.uniforms.uFogF.value=420;wm.uniforms.uFoam.value=0;wm.uniforms.uSunDir.value.set(-.4,.8,.3).normalize();
+  const sea=new T.Mesh(new T.PlaneGeometry(700,700,140,140).rotateX(-Math.PI/2),wm);sea.position.y=-.1;sc.add(sea);
+  sc.add(landMesh(MAP_LAND.main,.9,'#5f6f44'));
+  sc.add(landMesh(MAP_LAND.sand,.35,'#c8b48a'));
+  // 潮間帶泥灘
+  const flat=landMesh([[-14.5,-40],[-1,-40],[1,40],[3.4,41],[1.6,52],[.2,75],[-6,75],[-10,50]],.05,'#5d6a5c',-.12);flat.material.transparent=true;flat.material.opacity=.55;sc.add(flat);
+  ['xianxi','lunwei','lukang'].forEach(k=>sc.add(landMesh(MAP_LAND[k],1.1,'#a59e8c')));
+  // 外堤
+  [[-38,-16],[-12.8,9.8],[13.4,38]].forEach(([z0,z1])=>{const w=new T.Mesh(new T.BoxGeometry(.7,1.5,z1-z0),lam('#d7d2c4'));w.position.set(-14.1,.75,(z0+z1)/2);sc.add(w)});
+  // 工廠
+  const fg=new T.BoxGeometry(1,1,1),fm=[lam('#8c96a0'),lam('#6f8aa0'),lam('#b5ad9b'),lam('#9a6d57')];
+  [['xianxi',-38,-16],['lunwei',-12.8,9.8],['lukang',13.4,38]].forEach(([k,z0,z1],zi)=>{for(let x=-11;x<8;x+=2.6)for(let z=z0+2;z<z1-1;z+=2.4){if(hash(x*13+z*7+zi)<.42)continue;const h=.4+hash(x+z*3)*1.6,b=new T.Mesh(fg,fm[Math.floor(hash(x*z+zi)*4)]);b.scale.set(1.6+hash(z)*.8,h,1.4+hash(x)*.8);b.position.set(x,1.1+h/2,z);sc.add(b)}});
+  // 台61線
+  const road=new T.Mesh(new T.BoxGeometry(.9,.06,150),lam('#3a3a38'));road.position.set(12.5,.95,0);sc.add(road);
+  // 城鎮
+  const roof=[lam('#b5523b'),lam('#c9b79a'),lam('#8a4a3a')];
+  [[18,-26,18,'xx'],[19,30,30,'lk'],[18,-55,10,'sg'],[18,58,12,'fx']].forEach(([cx,cz,n,t],ti)=>{for(let i=0;i<n;i++){const a=hash(i*3.1+ti)*Math.PI*2,r=hash(i*7.7+ti)*5.5,h=.5+hash(i+ti*9)*.9,b=new T.Mesh(fg,roof[i%3]);b.scale.set(1,h,1);b.position.set(cx+Math.cos(a)*r,.9+h/2,cz+Math.sin(a)*r);sc.add(b)}});
+  // 風機（沿岸＋離岸風場）
+  const turbs=[];
+  [[-38,-16],[-12.8,9.8],[13.4,38]].forEach(([z0,z1])=>{for(let z=z0+1.5;z<z1;z+=3.4){const t=makeTurbine(.32);t.g.position.set(-14.3,1.4,z);sc.add(t.g);turbs.push(t)}});
+  for(let z=42;z<70;z+=4){const t=makeTurbine(.3);t.g.position.set(2.4-(z-42)*.05,.4,z);sc.add(t.g);turbs.push(t)}
+  for(let i=0;i<5;i++)for(let j=0;j<4;j++){const t=makeTurbine(.34);t.g.position.set(-48-i*9+(j%2)*3,0,-40+j*22+i*4);sc.add(t.g);turbs.push(t)}
+  // 釣點光柱
+  const beams=SPOTS.map(sp=>{const g=new T.Group();const b=new T.Mesh(new T.CylinderGeometry(.35,.35,7,12,1,true),new T.MeshBasicMaterial({color:0x38d6c6,transparent:true,opacity:.28,depthWrite:false,side:T.DoubleSide}));b.position.y=3.5;g.add(b);
+    const ring=new T.Mesh(new T.RingGeometry(.8,1.2,32),new T.MeshBasicMaterial({color:0x38d6c6,transparent:true,opacity:.7,side:T.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.2;g.add(ring);g.position.set(sp.x,0,sp.z);sc.add(g);return{g,b,ring}});
+  G.map={sc,cam,sea,wm,turbs,beams,tx:-2,tz:4,zoom:1};
+  buildLabels();
+}
+const MAP_TAGS=[['伸港',18,-55,'town'],['線西鄉',18,-26,'town'],['鹿港鎮',19,30,'town'],['福興',18,58,'town'],['台61',12.5,-44,'road'],['彰濱 線西區',-2,-27,'zone'],['彰濱 崙尾區',-2,-1.5,'zone'],['彰濱 鹿港區',-2,25,'zone'],['線西水道',-4,-14.4,'zone'],['崙尾水道',-6,11.6,'zone'],['離岸風場',-60,-6,'zone'],['臺灣海峽',-34,-46,'zone']];
+let LBL=[];
+function buildLabels(){const box=$('#labels');box.innerHTML='';LBL=[];
+  MAP_TAGS.forEach(([t,x,z,cls])=>{const e=document.createElement('div');e.className='tag '+cls;e.textContent=t;box.appendChild(e);LBL.push({e,x,y:1.6,z,map:1})});
+  SPOTS.forEach(sp=>{const e=document.createElement('div');e.className='pin';e.innerHTML=`<b>${esc(sp.n)}<em data-c="${sp.id}">0</em></b><span class="who" data-w="${sp.id}"></span><i></i>`;e.addEventListener('click',ev=>{ev.stopPropagation();selectSpot(sp.id)});box.appendChild(e);LBL.push({e,x:sp.x,y:1.6,z:sp.z,map:1,sp:sp.id})});
+  const s=document.createElement('div');s.className='pin shop';s.innerHTML='<b>彰濱釣具行<em>店</em></b><i></i>';s.addEventListener('click',ev=>{ev.stopPropagation();openSheet('shop')});box.appendChild(s);LBL.push({e:s,x:13.5,y:1.2,z:-4,map:1});
+}
+
+/* ---------- 3D 釣位 ---------- */
+function shoreH(sp){return sp.type==='tetra'?4.2:sp.type==='canal'?3.4:1}
+function buildSpot(sp){
+  const T=THREE;if(G.spot){disposeScene(G.spot.sc);}
+  const sc=new T.Scene(),cam=new T.PerspectiveCamera(55,1,.1,9000),H=shoreH(sp);
+  sc.fog=new T.Fog(0xa9c9d6,300,3800);
+  const sky=new T.Mesh(new T.SphereGeometry(6000,32,16),skyMat());sc.add(sky);
+  const sv=[];for(let i=0;i<600;i++){const a=Math.random()*Math.PI*2,y=Math.random()*.9+.05,r=Math.sqrt(1-y*y);sv.push(Math.cos(a)*r*5500,y*5500,Math.sin(a)*r*5500)}
+  const sg=new T.BufferGeometry();sg.setAttribute('position',new T.Float32BufferAttribute(sv,3));const stars=new T.Points(sg,new T.PointsMaterial({color:0xffffff,size:2,sizeAttenuation:false,transparent:true,opacity:0,fog:false,depthWrite:false}));sc.add(stars);
+  const hemi=new T.HemisphereLight(0xdfefff,0x40382a,.75),sun=new T.DirectionalLight(0xffffff,.9);sc.add(hemi,sun,sun.target);
+  const wm=waterMat(), water=new T.Mesh(new T.PlaneGeometry(520,520,170,170).rotateX(-Math.PI/2),wm);water.position.z=-230;sc.add(water);
+  const far=new T.Mesh(new T.PlaneGeometry(18000,18000,1,1).rotateX(-Math.PI/2),wm);far.position.y=-.4;sc.add(far);
+  const conc=lam('#a9a69c'),turbs=[];
+  if(sp.type!=='sand'){
+    const wall=new T.Mesh(new T.BoxGeometry(900,H+8,8),conc);wall.position.set(0,(H-8)/2,4);sc.add(wall);
+    const walk=new T.Mesh(new T.BoxGeometry(900,.12,3),lam('#c9c4b8'));walk.position.set(0,H+.06,1.6);sc.add(walk);
+    const land=new T.Mesh(new T.PlaneGeometry(900,500).rotateX(-Math.PI/2),lam('#56663a'));land.position.set(0,H-.3,258);sc.add(land);
+    const pine=new T.ConeGeometry(2.2,9,7),pm=lam('#2f4a2a');for(let x=-300;x<300;x+=7){const p=new T.Mesh(pine,pm);p.position.set(x+rnd(-2,2),H+4,24+rnd(0,6));p.scale.setScalar(rnd(.8,1.3));sc.add(p)}
+    if(sp.type==='tetra'){const tg=tetrapodGeo(),n=360,im=new T.InstancedMesh(tg,lam('#a8a69e'),n),o=new T.Object3D(),c=new T.Color();
+      for(let i=0;i<n;i++){const z=-rnd(.5,13),x=rnd(-160,160)*(i<210?.45:1);o.position.set(x,H-1.4-(-z)*.62+rnd(-.35,.35),z);o.rotation.set(rnd(0,6.3),rnd(0,6.3),rnd(0,6.3));o.scale.setScalar(rnd(1.05,1.45));o.updateMatrix();im.setMatrixAt(i,o.matrix);if(im.setColorAt){c.setHSL(.12,.05,rnd(.48,.66));im.setColorAt(i,c)}}
+      sc.add(im)}
+    else{const fz=-sp.wide;const w2=new T.Mesh(new T.BoxGeometry(900,H+8,8),conc);w2.position.set(0,(H-8)/2,fz-4);sc.add(w2);
+      const l2=new T.Mesh(new T.PlaneGeometry(900,400).rotateX(-Math.PI/2),lam('#6c6a5c'));l2.position.set(0,H-.3,fz-208);sc.add(l2);
+      const fg=new T.BoxGeometry(1,1,1),fms=[lam('#8c96a0'),lam('#6f8aa0'),lam('#b5ad9b'),lam('#a7b2b9')];
+      for(let i=0;i<42;i++){const b=new T.Mesh(fg,fms[i%4]),h=rnd(6,22);b.scale.set(rnd(14,40),h,rnd(12,30));b.position.set(rnd(-320,320),H+h/2,fz-rnd(30,140));sc.add(b)}
+      for(let i=0;i<7;i++){const st=new T.Mesh(new T.CylinderGeometry(1.2,1.6,rnd(30,48),10),lam('#c9c2b4'));st.position.set(rnd(-260,260),H+20,fz-rnd(60,150));sc.add(st)}
+      for(let x=-280;x<=280;x+=80){const t=makeTurbine(7,G.glowR);t.g.position.set(x+30,H,fz-12);sc.add(t.g);turbs.push(t)}}
+    for(const x of [-60,-135,-210,-285,60,135,210,285]){const t=makeTurbine(7,G.glowR);t.g.position.set(x,H,14);sc.add(t.g);turbs.push(t)}
+  }else{
+    const bg=new T.PlaneGeometry(900,320,1,1).rotateX(-Math.PI/2);bg.translate(0,0,-90);const p=bg.attributes.position;for(let i=0;i<p.count;i++)p.setY(i,1+p.getZ(i)*.055);bg.computeVertexNormals();
+    sc.add(new T.Mesh(bg,lam('#b9a57c')));
+    const dune=new T.Mesh(new T.PlaneGeometry(900,300).rotateX(-Math.PI/2),lam('#8a8a5a'));dune.position.set(0,4.4,220);sc.add(dune);
+    for(const x of [-70,-150,-230,-310,70,150,230,310]){const t=makeTurbine(7,G.glowR);t.g.position.set(x,4.2,62);sc.add(t.g);turbs.push(t)}
+  }
+  for(let i=0;i<26;i++){const t=makeTurbine(9,G.glowR);t.g.position.set(-2600+(i%9)*650+rnd(-80,80),-1,-1700-Math.floor(i/9)*560+rnd(-60,60));sc.add(t.g);turbs.push(t)}
+  // 角色與釣竿
+  const player=new T.Group();sc.add(player);
+  // 水下線、浮標、水花
+  const lineGeo=new T.BufferGeometry();lineGeo.setAttribute('position',new T.Float32BufferAttribute(new Float32Array(32*3),3));
+  const line=new T.Line(lineGeo,new T.LineBasicMaterial({color:0xf4f7f8,transparent:true,opacity:.8}));line.frustumCulled=false;sc.add(line);
+  const ring=new T.Mesh(new T.RingGeometry(.7,1,32),new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;sc.add(ring);
+  const aim=new T.Mesh(new T.RingGeometry(1.1,1.5,40),new T.MeshBasicMaterial({color:0x38d6c6,transparent:true,opacity:.75,side:T.DoubleSide,depthWrite:false}));aim.rotation.x=-Math.PI/2;sc.add(aim);
+  const NP=70,pp=new Float32Array(NP*3),pg=new T.BufferGeometry();pg.setAttribute('position',new T.Float32BufferAttribute(pp,3));
+  const spl=new T.Points(pg,new T.PointsMaterial({color:0xeaf6f8,size:.35,transparent:true,opacity:.9,depthWrite:false}));spl.frustumCulled=false;sc.add(spl);
+  const fish=new T.Group();const fb=new T.Mesh(new T.SphereGeometry(.5,14,10),lam('#888'));fb.scale.set(1,.42,.26);fish.add(fb);const ft=new T.Mesh(new T.ConeGeometry(.24,.42,6),fb.material);ft.rotation.z=Math.PI/2;ft.position.x=-.62;fish.add(ft);fish.rotation.y=Math.PI/2;fish.visible=false;sc.add(fish);
+  const others=new T.Group();sc.add(others);
+  const czm=[];for(let i=0;i<8;i++){const m=new T.Mesh(new T.CircleGeometry(1,32).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:0x9a6a34,transparent:true,opacity:0,depthWrite:false}));m.visible=false;sc.add(m);czm.push(m)}
+  const caim=new T.Mesh(new T.RingGeometry(.8,1.15,36).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:0xffb447,transparent:true,opacity:.85,side:T.DoubleSide,depthWrite:false}));caim.visible=false;sc.add(caim);
+  const scoop=new T.Mesh(new T.SphereGeometry(.22,8,6),lam('#7a5226'));scoop.visible=false;sc.add(scoop);
+  G.spot={sc,cam,sky,stars,hemi,sun,wm,water,far,H,player,line,ring,aim,spl,pp,pv:new Float32Array(NP*3),pt:0,fish,fb,turbs,others,oth:{},czm,caim,scoop,sp,camPos:new T.Vector3(),camLook:new T.Vector3(),shake:0};
+  refreshPlayer();refreshRig3D();
+}
+function makePlayerMesh(){const T=THREE,g=new T.Group(),vest=has('vest'),body=vest?'#ff7a2e':'#2a5574';
+  const leg=new T.BoxGeometry(.18,.86,.22);[-.13,.13].forEach(x=>{const l=new T.Mesh(leg,lam('#283240'));l.position.set(x,.43,0);g.add(l)});
+  const b=new T.Mesh(new T.BoxGeometry(.52,.68,.32),lam(body));b.position.y=1.2;g.add(b);
+  const head=new T.Mesh(new T.SphereGeometry(.15,12,10),lam('#e2b48f'));head.position.y=1.68;g.add(head);
+  const cap=new T.Mesh(new T.CylinderGeometry(.165,.165,.1,14),lam('#e8e2d0'));cap.position.y=1.79;g.add(cap);
+  const brim=new T.Mesh(new T.BoxGeometry(.25,.025,.18),lam('#e8e2d0'));brim.position.set(0,1.75,-.16);g.add(brim);
+  [[.2,-.25],[-.08,-.3]].forEach(([x,z])=>{const a=new T.Mesh(new T.BoxGeometry(.12,.12,.52),lam(body));a.position.set(x,1.3,z);g.add(a)});
+  const bucket=new T.Mesh(new T.CylinderGeometry(.22,.18,.36,12),lam('#3a7bd5'));bucket.position.set(-.7,.18,.5);g.add(bucket);
+  return g}
+function makeRod(len,lure){const T=THREE,root=new T.Group();const n=10,sl=len/n;let parent=root;const segs=[];
+  for(let i=0;i<n;i++){const s=new T.Group();if(i>0)s.position.y=sl;const r0=.03*(1-i/n)+.005,r1=.03*(1-(i+1)/n)+.005;
+    const m=new T.Mesh(new T.CylinderGeometry(r1,r0,sl,6),lam(i<2?'#1b1b1d':lure?'#2c4a62':'#5b2a1f'));m.position.y=sl/2;s.add(m);parent.add(s);segs.push(s);parent=s}
+  const tip=new T.Object3D();tip.position.y=sl;parent.add(tip);
+  const reel=new T.Mesh(new T.CylinderGeometry(.065,.065,.09,14),lam('#c8ccd0'));reel.rotation.z=Math.PI/2;reel.position.set(0,.48,.08);root.add(reel);
+  return{root,segs,tip}}
+function makeFloatMesh(ty){const T=THREE,g=new T.Group(),mats=[],M=c=>{const m=new T.MeshLambertMaterial({color:c});mats.push(m);return m};
+  const add=(geo,c,y)=>{const m=new T.Mesh(geo,M(c));m.position.y=y;g.add(m);return m};
+  const ledC=FT[ty]&&FT[ty].led, ledM=(geo,y)=>{const m=new T.Mesh(geo,new T.MeshBasicMaterial({color:ledC}));m.position.y=y;g.add(m);return m};
+  if(ty==='abo'||ty==='eabo'){add(new T.SphereGeometry(.09,14,10),'#ff4b2b',.02);add(new T.CylinderGeometry(.091,.091,.018,14),'#151515',.02);if(ty==='abo')add(new T.SphereGeometry(.035,10,8),'#ffd34a',.11);else{add(new T.CylinderGeometry(.03,.03,.03,10),'#222',.115);g.userData.led=ledM(new T.SphereGeometry(.028,10,8),.15)}}
+  else if(ty==='cone'){const c=add(new T.ConeGeometry(.09,.2,14),'#ff5a2b',-.02);c.rotation.x=Math.PI;add(new T.CylinderGeometry(.09,.09,.03,14),'#ffd34a',.09)}
+  else if(ty==='long'){add(new T.CylinderGeometry(.03,.045,.18,10),'#ff7b2e',-.05);add(new T.CylinderGeometry(.012,.012,.12,8),'#111',.1);add(new T.CylinderGeometry(.012,.012,.12,8),'#ffd34a',.22);add(new T.CylinderGeometry(.012,.012,.12,8),'#ff2d20',.34)}
+  else if(ty==='short'){add(new T.CylinderGeometry(.05,.06,.14,10),'#ff4b2b',-.02);add(new T.CylinderGeometry(.022,.022,.14,8),'#ff9a1f',.12)}
+  else{add(new T.CylinderGeometry(.045,.055,.16,10),'#ff4b2b',-.02);add(new T.CylinderGeometry(.012,.012,.1,8),'#333',.11);g.userData.led=ledM(new T.CylinderGeometry(.018,.018,.12,8),.21)}
+  if(ledC){const s=new T.Sprite(new T.SpriteMaterial({map:G.glowW,color:new T.Color(ledC),blending:T.AdditiveBlending,depthWrite:false,transparent:true}));s.position.y=ty==='eabo'?.15:.24;s.scale.setScalar(.8);g.add(s);g.userData.glow=s}
+  g.userData.mats=mats;g.scale.setScalar(5);return g}
+function makeLureMesh(){const T=THREE,g=new T.Group();const b=new T.Mesh(new T.SphereGeometry(.06,10,8),new T.MeshLambertMaterial({color:'#7fd0ef',emissive:0x113344}));b.scale.set(1.8,.7,.6);g.add(b);g.scale.setScalar(5);return g}
+function refreshPlayer(){if(!G.spot)return;const P=G.spot;P.player.children.slice().forEach(c=>{if(c!==P.rodRoot)P.player.remove(c)});P.body=makePlayerMesh();P.player.add(P.body)}
+function refreshRig3D(){if(!G.spot)return;const P=G.spot,T=THREE;
+  if(P.rod){P.player.remove(P.rod.root)}const rodIt=eqI('rod');P.rod=makeRod(rodIt?rodIt.len:5.3,rodIt&&rodIt.lure);P.rod.root.position.set(.24,1.28,-.42);P.rodRoot=P.rod.root;P.player.add(P.rod.root);
+  if(P.float)P.sc.remove(P.float);const b=eqI('bait'),lure=b&&b.cat==='lure';P.float=lure?makeLureMesh():makeFloatMesh((eqI('float')||{ty:'abo'}).ty);P.float.visible=false;P.sc.add(P.float);
+}
+
+/* ---------- 天空與光線 ---------- */
+function applySky(P,e,sp){const T=THREE,C=h=>new T.Color(h);
+  const dayT=clamp((e.el+.05)/.35,0,1),dusk=clamp(1-Math.abs(e.el-.04)/.22,0,1);
+  const top=C('#040a18').lerp(C('#2f74c9'),dayT).lerp(C('#2b3f73'),dusk*.55), hor=C('#0d1d33').lerp(C('#bcdcef'),dayT).lerp(C('#f0864a'),dusk*.8);
+  const ov=[0,.2,.55,.65,.45][e.wx];if(ov){const gy=C('#8a96a0').multiplyScalar(.25+.75*e.L);top.lerp(gy,ov);hor.lerp(gy,ov*.9)}
+  const sd=new T.Vector3(.35,Math.sin(e.a)*.95,Math.cos(e.a)).normalize();
+  P.sky.material.uniforms.uTop.value.copy(top);P.sky.material.uniforms.uHor.value.copy(hor);P.sky.material.uniforms.uSunDir.value.copy(sd);
+  P.sky.material.uniforms.uSunC.value.set(dusk>.3?'#ffb070':'#fff2d0').multiplyScalar(e.el>-.08?(1-ov*.8):0);
+  P.sc.fog.color.copy(hor);
+  const u=P.wm.uniforms;u.uSunDir.value.copy(e.el>0?sd:new T.Vector3(-.3,.6,-.6).normalize());u.uSun.value.set(dusk>.3?'#ffb27a':'#fff1cf').multiplyScalar(e.el>0?(1-ov*.7):.25);
+  u.uSky.value.copy(hor);u.uFog.value.copy(hor);
+  const murk=sp.type==='canal'?C('#2c4a3e'):C('#14393f');u.uDeep.value.copy(C('#03101a').lerp(murk,.15+.85*dayT));u.uShal.value.copy(C('#0b2430').lerp(C(sp.type==='canal'?'#5b7a5c':'#4c7d70'),.15+.85*dayT));
+  u.uAmp.value=[.25,.3,.4,.45,.95][e.wx]*(sp.type==='canal'?.4:1);u.uFoam.value=e.wx===4?.9:.3;
+  P.sun.position.copy(e.el>0?sd:new T.Vector3(-.3,.6,-.6)).multiplyScalar(100);P.sun.intensity=e.el>0?(.25+.85*dayT)*(1-ov*.5):.12;P.sun.color.set(dusk>.3?'#ffc08a':'#ffffff');
+  P.hemi.intensity=.18+.6*e.L;P.stars.material.opacity=clamp(-e.el*4,0,1)*(1-ov);
+}
+
+/* =========================================================
+   釣魚狀態機
+   ========================================================= */
+let PX=0, walkDir=0;
+let F={st:'idle'}, yaw=0, holdP=false, holdS=false, power=0, chargeT=0;
+function fwd(a){return{x:-Math.sin(a),z:-Math.cos(a)}}
+function pool(sp,bait,layer,e,hook,lure,bias){const out=[];let tot=0;
+  for(const k in sp.fish){const f=FISH[k];let a=sp.fish[k];
+    const bw=lure?((f.l&&f.l[bait])||0):(f.any?f.any:(f.b[bait]||0));a*=bw;if(!a)continue;
+    const d=layer<f.lay[0]?f.lay[0]-layer:layer>f.lay[1]?layer-f.lay[1]:0;a*=d===0?1:d<.15?.45:.08;
+    a*=e.night?f.t[1]:e.dusk?f.t[2]:f.t[0];
+    if(f.sea)a*=f.sea.includes(e.month)?1.3:.45;
+    if(!lure&&hook){const x=hook.cls-f.m;a*=x>=3?.08:x===2?.4:x<=-3?.55:1}
+    if(bias)a*=(bias[k]||1)*(bias.__all||1);
+    if(a>0){out.push([k,a]);tot+=a}}
+  return{out,tot}}
+function gmod(r,e,sp,lying){let g=.65+.7*e.flow;g*=[1,1.05,1.15,1.12,.8][e.wx];
+  if(r.leader)g*=(r.leader.mat==='fc'?1.1:1)*clamp(1.25-r.leader.kg/22,.72,1.2);else if(r.lure&&r.main&&r.main.mat==='pe')g*=.7;
+  if(!r.lure&&r.float){const q=r.sinkG/r.float.g;g*=q>=.6&&q<=1?1.12:q<.4?.9:1}
+  if(lying)g*=.85;return g}
+function canStart(){const r=rig();if(!r.ok){toast(r.E[0][1]);openSheet('gear');gearTab='rig';renderSheet();return null}return r}
+function startCharge(){if(F.st!=='idle')return;const r=canStart();if(!r)return;F={st:'charge',r};chargeT=0;power=0;$('#aimHint').hidden=true}
+function release(){
+  if(F.st!=='charge')return;const r=F.r,sp=CUR,e=env();
+  let d=Math.max(6,r.maxCast*power*rnd(.96,1.04));
+  if(e.wx===4)d*=1.08;
+  if(sp.type==='canal'&&d>sp.wide-8){d=sp.wide-8;toast('拋到對岸邊了，距離縮短')}
+  d=Math.min(d,r.onReel*.92);if(d<6){toast('捲線器上的母線太少，到釣具行補線');F={st:'idle'};return}
+  if(!r.lure)use(r.bait.id,1);
+  const dep=depthAt(sp,d,e);
+  F={st:'cast',t:0,d,yaw,r,dep,ft:.55+d/48,lat:0,rig:r.bait.id,lure:r.lure};
+  sfx('whoosh');save();
+}
+function landed(){const r=F.r,sp=CUR,e=env();F.st=r.lure?'retrieve':'sink';F.t=0;sfx('splash');splash(F.pos,1);
+  if(F.dep<.6&&!r.lure)toast(sp.type==='sand'?'這裡水太淺，拋遠一點':'水太淺了，等漲潮或拋遠一點');
+  if(r.lure){F.D=F.d;F.layer=r.bait.sub==='top'?0:.05;F.hitCD=rnd(1.5,4);return}
+  F.slk=e.wind*.25;
+  const tana=r.stopper?S.cfg.tana:F.dep;F.eff=Math.min(tana,F.dep);F.lying=!!r.stopper&&tana>F.dep+.2;
+  F.sinkT=F.eff/(.18+r.sinkG*.09);F.layer=F.eff/F.dep;
+  if(F.lying&&Math.random()<sp.snag*.22*(tana-F.dep>1?1.5:1)){F.st='snag';F.t=0;toast('棚比水深還深，鉛卡進底部了');return}
+}
+function schedule(first){const r=F.r,sp=CUR,e=env(),P=pool(sp,r.bait.id,F.layer,e,r.hook,false),gm=gmod(r,e,sp,F.lying);
+  F.pool=P;const a=P.tot*gm;F.nextAt=F.t+(a<.04?1e9:clamp(-Math.log(1-Math.random())*22/a,3,120));
+  if(first){const thief=(sp.fish.aigo||0)+(sp.fish.fugu||0)*1.3,soft=['krill','bread','iso_shrimp','sandworm'].includes(r.bait.id)?1.5:['crab','corn','barnacle'].includes(r.bait.id)?.35:1;
+    F.stealAt=thief>0?F.t+Math.max(20,-Math.log(1-Math.random())*70/(thief*soft)):1e9;F.baitOn=true;F.quiet=0}
+  const k=P.out.length?pick(P.out):null;F.next=k;if(k){const bk=BITE_K[FISH[k].bite];F.nibs=Math.floor(rnd(bk.nb[0],bk.nb[1]+.99))}}
+function biteWindow(){const r=F.r,e=env(),fl=r.float;let w=fl?fl.win:1.2;
+  if(e.wx>=3&&fl)w*=1-(100-fl.wave)/100*.6;
+  if(e.dark){w*=fl&&FT[fl.ty]&&FT[fl.ty].led?1.1:has('lamp')?.85:.55}
+  if(F.lying)w*=.6;w*=clamp(1-(F.slk||0)*.06,.5,1);return w*BITE_K[FISH[F.k].bite].wm}
+function strike(){
+  const s=F.st;
+  if(s==='sink'||s==='wait'){toast(s==='sink'?'餌還在下沉，揚竿就白拋了':'沒有魚訊就揚竿，收線重拋吧');endCast();return}
+  if(s==='nibble'){toast('太早揚竿！小魚只是在試探，餌被扯掉了');endCast();return}
+  if(s==='bite'){const bk=BITE_K[FISH[F.k].bite];
+    if(F.bt<bk.ws){toast('太早了，浮標還沒沉下去，魚吐餌跑了');endCast();return}
+    const r=F.r;let p=.9-Math.min(.4,(F.slk||0)*.05)-(F.lying?.2:0)+(FISH[F.k].bite==='gone'?.05:0)-(r.rod&&r.rod.act>.5&&r.hook&&r.hook.cls>=5?.08:0);
+    if(Math.random()>p){toast('揚竿慢了半拍，沒刺中');endCast();return}
+    startFight(F.k);return}
+  if(s==='lurehit'){startFight(F.k);return}
+}
+/* 撒餌：自製誘餌桶與誘餌雲 */
+let CZ=[],CM={on:false,ch:false,pow:0,t:0},cyaw=0,MIX={kr:1,pw:[]};
+function mixProps(kr,pws){const ps=pws.map(k=>PW[k]).filter(Boolean);
+  const sum=f=>ps.reduce((a,p)=>a+(p[f]||0),0),bias={};let all=1;
+  ps.forEach(p=>{for(const k in p.bias)bias[k]=Math.max(bias[k]||1,p.bias[k]);if(p.all)all=Math.max(all,p.all)});
+  return{str:.55+.28*kr+.18*ps.length+sum('str'),sink:Math.max(.03,.14+.05*kr+sum('sink')),range:Math.max(6,11+kr*1.5+sum('range')),rad:Math.max(1.5,2.6+sum('rad')),
+    dur:80*(1+sum('dur')),maxL:Math.min(1,...ps.map(p=>p.maxL||1)),bias,all,thief:.25+kr*.45+(pws.includes('pw_float')||pws.includes('pw_aigo')?.3:0),
+    name:[kr?`南極蝦×${kr}`:'',...ps.map(p=>p.n)].filter(Boolean).join('＋'),n:kr*8+ps.length*6}}
+function baitXY(){const a=F.yaw||0,lat=F.lat||0,d=(F.st==='retrieve'||F.st==='lurehit'||F.st==='fight')?(F.D||0):(F.d||0);return{x:PX-Math.sin(a)*d+Math.cos(a)*lat,y:Math.cos(a)*d+Math.sin(a)*lat}}
+function chumAt(x,y,layer){let m=0,ov=0,th=0;const bias={};
+  for(const z of CZ){if(z.fly>0)continue;const r=z.p.rad+z.t*.04,h=Math.exp(-((x-z.x)**2+(y-z.y)**2)/(2*r*r)),lm=Math.max(0,1-Math.abs(z.layer-layer)/.45),life=Math.sqrt(Math.max(0,1-z.t/z.p.dur)),o=h*lm*life;
+    ov+=o;m+=z.p.str*o;th+=z.p.thief*o;for(const k in z.p.bias)bias[k]=Math.max(bias[k]||1,1+(z.p.bias[k]-1)*Math.min(1,o*1.5));if(z.p.all>1)bias.__all=Math.max(bias.__all||1,1+(z.p.all-1)*Math.min(1,o*1.5))}
+  return{m:1+Math.min(2.2,m*1.3),ov,bias,th}}
+function chumThrow(power){const b=S.bucket;if(!b||b.n<1){toast('誘餌桶空了，先調配一桶');openChum();return}
+  if(F.st==='fight')return;const p=b.p,d=clamp(p.range*power,3,p.range);b.n--;if(b.n<=0)S.bucket=null;save();
+  const z={x:PX-Math.sin(cyaw)*d+rnd(-.8,.8),y:Math.cos(cyaw)*d+rnd(-.8,.8),t:0,p,layer:0,fly:has3D&&G.spot?.3+d/35:0,ft:0};
+  CZ.push(z);if(CZ.length>8)CZ.shift();sfx('whoosh');if(!z.fly)sfx('splash')}
+function chumTick(dt,e){if(!CUR)return;for(const z of CZ){if(z.fly>0){z.ft+=dt;if(z.ft<z.fly)continue;z.fly=0;sfx('splash');if(G.spot)splash(new THREE.Vector3(z.x,G.spot.water.position.y,G.spot.player.position.z-z.y),.55)}
+    z.t+=dt;z.x+=CUR.cur*(e.rise?1:-1)*dt*.35;const dep=depthAt(CUR,Math.max(3,z.y),e);z.layer=Math.min(z.p.maxL,z.layer+z.p.sink/Math.max(.8,dep)*dt)}
+  CZ=CZ.filter(z=>z.t<z.p.dur)}
+function openChum(){gearTab='chum';gearSlot=null;openSheet('gear')}
+function toggleChum(){if(!S.bucket||S.bucket.n<1){toast('誘餌桶是空的，先調配一桶撒餌');openChum();return}CM.on=!CM.on;CM.ch=false;if(CM.on){cyaw=F.st!=='idle'&&F.yaw!=null?F.yaw:yaw;toast('左右滑動畫面瞄準，按住「撒出」蓄力',2200)}}
+function chumToFloat(){if(!['sink','wait','nibble','bite','retrieve'].includes(F.st))return toast('還沒拋竿，沒有浮標可以對準');const b=S.bucket;if(!b)return openChum();
+  const bp=baitXY(),d=Math.hypot(bp.x-PX,bp.y);cyaw=Math.atan2(-(bp.x-PX),bp.y);if(d>b.p.range)toast(`浮標在 ${Math.round(d)}m，誘餌杓最遠只到 ${Math.round(b.p.range)}m`);chumThrow(Math.min(1,d/b.p.range))}
+function chumView(){const b=S.bucket,own=k=>S.inv[k]||0;
+  const cur=b&&b.n>0?`<div class="msgs"><div class="ok">誘餌桶：${esc(b.p.name)}・剩 <b>${b.n}</b> 杓</div></div>${statKV(b.p)}`:'<div class="msgs"><div class="w">誘餌桶是空的。用下面的材料調一桶，或倒入現成撒餌包。</div></div>';
+  MIX.kr=Math.min(MIX.kr,own('krill_blk'),2);MIX.pw=MIX.pw.filter(k=>own(k)>0);
+  const mp=mixProps(MIX.kr,MIX.pw);
+  const pws=Object.keys(PW).map(k=>{const on=MIX.pw.includes(k),o=own(k);return `<button data-mixpw="${k}" class="${on?'on':o?'have':''}"${o?'':' disabled'}>${PW[k].n}${o?` ×${o}`:'（沒有）'}</button>`}).join('');
+  return cur+`<div class="gh">調配新的一桶</div>
+    <div class="slider"><div class="lab"><b>南極蝦冷凍塊</b><span>${MIX.kr} 塊</span></div><div class="stp"><button data-mixkr="-1" aria-label="減少">−</button><div style="text-align:center;font:500 12px var(--f-body);color:var(--mute)">持有 ${own('krill_blk')} 塊・最多 2 塊</div><button data-mixkr="1" aria-label="增加">＋</button></div></div>
+    <p style="margin:12px 0 6px;font:600 13px var(--f-body)">集魚粉・添加劑（最多 2 種）</p><div class="sizes">${pws}</div>
+    <div class="gh">這桶的效果</div>${mp.n?statKV(mp):'<div class="empty">至少放一塊南極蝦或一包集魚粉。</div>'}
+    <p><button class="go" data-mix style="width:100%"${mp.n?'':' disabled'}>攪拌製作（${mp.n} 杓）${b&&b.n>0?`・會倒掉剩下的 ${b.n} 杓`:''}</button></p>
+    ${own('chum')?`<p><button class="ghost" data-pour style="width:100%">倒入現成撒餌包（12 杓）・持有 ${own('chum')} 包</button></p>`:''}
+    <p style="font:400 12px/1.6 var(--f-body);color:var(--mute)">撒餌雲會隨潮流漂、慢慢往下沉，魚會聚在雲裡。浮標的餌在雲的位置和深度裡，魚訊才會變快；撒太遠或沉太深都沒用。南極蝦越多，偷餌的小魚也越多。</p>`}
+function statKV(p){const sk=p.sink>.3?'快（底層）':p.sink<.1?'慢（中上層）':'中等';const bias=Object.keys(p.bias).map(k=>FISH[k]?.n).filter(Boolean);
+  return `<div class="kv"><span>誘魚力<b>${f1(p.str)}</b></span><span>最遠<b>${Math.round(p.range)}m</b></span><span>下沉<b>${sk}</b></span><span>擴散<b>${f1(p.rad)}m</b></span><span>持續<b>${Math.round(p.dur)}s</b></span>${p.all>1?'<span>全魚種<b>+'+Math.round((p.all-1)*100)+'%</b></span>':''}${bias.length?`<span>特別吸引<b>${bias.join('、')}</b></span>`:''}</div>`}
+function mend(){if(!['sink','wait','nibble','bite'].includes(F.st))return;ac();
+  const s0=F.slk||0;if(s0<.3){F.d=Math.max(5,F.d-1.2);if(S.assist)toast('線已經是直的了，再收會把浮標拉過來',1600)}else F.slk=Math.max(0,s0-2.4);
+  F.mendT=.35;sfx('click');setTimeout(()=>sfx('click'),80);setTimeout(()=>sfx('click'),160);
+  if(F.st==='bite'&&Math.random()<.5){if(S.assist)toast('收線時魚感覺到阻力，吐餌了');if(Math.random()<.5)F.baitOn=false;F.st='wait';schedule(false)}}
+function floatAnim(dt,t){if(!['sink','wait','nibble','bite','snag'].includes(F.st))return;
+  if(F.fy==null){F.fy=0;F.fv=0;F.ftl=1.3;F.ftv=0;F.fs=0;F.fsv=0}
+  let ty=Math.sin(t*1.7)*.015,tt=0,ts=0,k=55;const st=F.st;
+  if(st==='sink'){const q=Math.min(1,F.t/Math.max(.1,F.sinkT));tt=(1-q)*1.35;ty=-.04*q;k=25}
+  else if(st==='nibble'){const ph=clamp(F.nt/.55,0,1);ty=-.13*Math.sin(Math.PI*ph)*(1+.35*Math.sin(F.nt*26));k=90}
+  else if(st==='bite'){const b=F.bt,sy=FISH[F.k].bite;
+    if(sy==='slow'){ty=-Math.min(1.3,b*b*1.1+b*.25);k=40}
+    else if(sy==='gone'){ty=b<.08?-.15:-1.5;k=150}
+    else if(sy==='tremble'){ty=b<.25?-.1-.08*Math.sin(b*45):-1.3;k=b<.25?120:70}
+    else if(sy==='run'){ty=-.3;ts=Math.min(3.5,b*b*2.2+b*.8);k=50}
+    else if(sy==='stop'){ty=.18;tt=Math.min(1.4,b*1.8);k=35}}
+  else if(st==='snag'){tt=1.4;ty=.05}
+  if(F.lying&&st!=='sink')tt=1.4;
+  const c=2*Math.sqrt(k)*.75;F.fv+=(k*(ty-F.fy)-c*F.fv)*dt;F.fy+=F.fv*dt;
+  F.ftv+=(30*(tt-F.ftl)-2*Math.sqrt(30)*.9*F.ftv)*dt;F.ftl+=F.ftv*dt;
+  F.fsv+=(25*(ts-F.fs)-9*F.fsv)*dt;F.fs+=F.fsv*dt}
+function startFight(k){const f=FISH[k],r=F.r,sp=CUR,e=env();
+  const bias=clamp(F.dep/8,0,1)*.5+(r.hook&&!r.lure&&r.hook.cls>=f.m+1?.35:0);
+  const w=Math.round((f.w[0]+(f.w[1]-f.w[0])*Math.pow(Math.random(),2.3-.9*bias))*100)/100;
+  F.st='fight';F.k=k;F.w=w;F.P=.35+w*f.pk*1.25;F.St=1;F.D=F.D||F.d;F.D0=F.D;F.ph='run';F.pt=rnd(1,2.6);F.T=0;F.spike=0;F.over=0;F.slack=0;F.rub=0;F.relT=0;F.ft=0;F.fang=0;F.slip=false;
+  sfx('bite');vib([60,40,120]);callout('中魚！');if(G.spot)G.spot.shake=.5;
+}
+function endCast(msg){if(msg)toast(msg);F={st:'idle'};power=0;holdP=false;holdS=false;save();
+  if(G.spot){G.spot.float.visible=false;G.spot.fish.visible=false}}
+function lose(kind){const r=F.r,q=S.eq,ll=Math.min(S.cfg.ll,S.cfg.tana);let m='';
+  if(r.lure){const lu=r.bait.n;use(r.bait.id);if(kind==='main'||!r.leader){const mt=Math.round(rnd(5,25));useLine(q.main,mt);m=`母線斷了！損失 ${lu} 和母線約 ${mt}m`}else if(kind==='rod'){use(q.rod);m='啪！竿子折斷了'}else{useLine(q.leader,1.5);m=`子線斷了，${lu} 被帶走`}}
+  else if(kind==='rod'){use(q.rod);m='啪！竿子被大魚拉斷了。線組太強、竿子太弱'}
+  else if(kind==='main'){const mt=Math.round(rnd(10,40));useLine(q.main,mt);useLine(q.leader,ll);use(q.hook);use(q.stopper);use(q.bead);use(q.swivel);['s1','s2','s3'].forEach(k=>use(q[k]));let fl='';if(Math.random()<.7){use(q.float);fl='、浮標'}
+    m=`母線斷了！損失母線約 ${mt}m、子線、鉤、鉛、浮標止${fl}`;if(G.spot)refreshRig3D()}
+  else if(kind==='hook'){use(q.hook);m='鉤被拉直了，魚跑了（損失 1 支鉤）'}
+  else{useLine(q.leader,ll);use(q.hook);if(kind==='swivel')use(q.swivel);const lostS=[];['s1','s2','s3'].forEach(k=>{if(q[k]&&Math.random()<.7){lostS.push(IT[q[k]].n);use(q[k])}});
+    m=`${kind==='knot'?'結點':kind==='swivel'?'轉環':'子線'}斷了！損失子線 ${ll}m、鉤${kind==='swivel'?'、轉環':''}${lostS.length?'、'+lostS.join('、'):''}`}
+  sfx('snap');vib(200);save();return m}
+function catchFish(){const f=FISH[F.k],sp=CUR,r=F.r;
+  if(!r.lure){useLine(S.eq.leader,.1);if(Math.random()<.15)use(S.eq.hook)}
+  const L=Math.round(f.lf*4*Math.cbrt(F.w*1000)), v=f.junk?0:Math.round(F.w*f.ppk*(S.assist?1:1.15)), now=env();
+  const rec=!S.best[F.k]||F.w>S.best[F.k].w;if(rec&&!f.junk)S.best[F.k]={w:F.w,L,sp:sp.id};
+  S.total++;lastCatch={k:F.k,w:F.w,L,v,sp:sp.id,ft:F.ft,rec:rec&&!f.junk,self:!S.assist,t:`${String(Math.floor(now.gh)).padStart(2,'0')}:${String(Math.floor(now.gh%1*60)).padStart(2,'0')}`};
+  if(room)room.emit('catch',{n:S.name,f:f.n,w:F.w,sp:sp.n}).catch(()=>{});
+  feed(`你在${sp.n}釣到 ${f.n} ${f2(F.w)}kg`);sfx('coin');vib([40,30,40]);
+  endCast();openSheet('result');
+}
+function step(dt){
+  const e=env(),sp=CUR;if(!sp)return;const s=F.st;
+  if(s==='charge'){chargeT+=dt;power=.5-.5*Math.cos(chargeT*Math.PI/.95);return}
+  if(s==='cast'){F.t+=dt;if((!has3D||!G.spot)&&F.t>.2+F.ft){F.pos=null;landed()}return}
+  if(s==='sink'){F.t+=dt;if(F.t>=F.sinkT){F.st='wait';schedule(true)}return}
+  if(s==='sink'||s==='wait'||s==='nibble'||s==='bite'){const pe=F.r.main&&F.r.main.mat==='pe',ws=e.monsoon?-1:1;
+    F.slk=(F.slk||0)+e.wind*.042*(pe?1.5:1)*dt;F.lat=clamp((F.lat||0)+ws*(e.wind*.012+F.slk*.035)*dt,-25,25);
+    if(F.slk>8&&sp.type!=='sand')F.d=Math.max(6,F.d-.25*dt);
+    if(F.slk>1.5&&F.nextAt<1e9)F.nextAt+=dt*clamp((F.slk-1.5)*.25,0,3);
+    if(S.assist&&F.slk>4&&!F.slkHint){F.slkHint=1;toast('風把母線吹出一大個弧，按「理線」把多餘的線收掉',2800)}}
+  if(F.mendT>0)F.mendT-=dt;
+  if(s==='wait'||s==='nibble'||s==='bite'){F.t+=dt;F.lat+=sp.cur*(e.rise?1:-1)*dt*.35*(e.wx===4?1.6:1);F.lat=clamp(F.lat,-25,25);
+    if(F.lying&&Math.random()<sp.snag*.012*dt){F.st='snag';F.t=0;toast('浮標躺平不動了……好像掛底');return}
+    {const bp=baitXY(),C=chumAt(bp.x,bp.y,F.layer||0);F.cm=C.m;F.cb=C.bias;if(F.nextAt<1e9)F.nextAt-=dt*(C.m-1);if(F.baitOn&&C.th>0)F.stealAt-=dt*C.th*1.2}
+    if(F.baitOn&&F.t>F.stealAt){F.baitOn=false}
+    if(s==='wait'){F.quiet+=dt;
+      if(F.t>=F.nextAt){if(!F.baitOn){F.nextAt=1e9}else if(F.nibs>0){F.nibs--;F.st='nibble';F.nt=0;F.nextAt=F.t+rnd(1.2,3.2)}else{F.k=F.next;if(F.cb&&Object.keys(F.cb).length){const P2=pool(sp,F.r.bait.id,F.layer,e,F.r.hook,false,F.cb);if(P2.out.length)F.k=pick(P2.out)}F.st='bite';F.bt=0;F.win=biteWindow();if(S.assist){sfx('bite');vib(80)}if(F.pos)splash(F.pos,.08);F.quiet=0}}
+      if(F.quiet>40&&!F.hinted){F.hinted=true;toast(F.baitOn?'好久沒動靜，試試換棚深、換餌或換位置':'好久沒動靜……餌可能早就被偷吃了，收回來看看',3200)}}
+    else if(s==='nibble'){F.nt+=dt;if(F.nt>.55)F.st='wait'}
+    else if(s==='bite'){F.bt+=dt;const ws=BITE_K[FISH[F.k].bite].ws;if(F.bt>ws+F.win){
+      if(Math.random()<.6){F.baitOn=false;toast('魚吐餌了，餌被吃掉')}else toast('魚吐餌了');F.st='wait';schedule(false)}}
+    return}
+  if(s==='snag'){F.t+=dt;if(holdP&&F.t>1.2){if(Math.random()<.3)endCast('拉脫了！鉤鉛都還在');else endCast(lose('leader'))}return}
+  if(s==='retrieve'||s==='lurehit'){const r=F.r,lu=r.bait;F.t+=dt;
+    if(s==='lurehit'){F.ht+=dt;if(F.ht>.9){F.st='retrieve';toast('沒揚到竿，魚放掉了')}return}
+    const reel=holdP, v=(r.reel?r.reel.ratio*.16:.8)*.75;
+    if(reel)F.D-=v*dt;
+    const sinkL=lu.sub==='jig'||lu.sub==='soft', tgt=lu.sub==='top'?0:reel?(lu.sub==='minnow'?(lu.lay[0]+lu.lay[1])/2:lu.lay[0]+.1):(sinkL?1:lu.sub==='minnow'&&lu.id==='minnow9'?0:F.layer);
+    F.layer+=clamp(tgt-F.layer,-dt*.35,dt*.35);
+    if((reel||sinkL&&F.layer<.98)&&F.t>F.hitCD){const bp=baitXY(),C=chumAt(bp.x,bp.y,F.layer),P=pool(sp,lu.id,F.layer,e,null,true,C.bias),g=gmod(r,e,sp,false)*C.m,rate=P.tot*g*.09;F.cm=C.m;
+      if(Math.random()<rate*dt){F.k=pick(P.out);F.st='lurehit';F.ht=0;if(S.assist)callout('咚！');sfx('bite');vib(90);F.hitCD=F.t+2;return}}
+    if(F.layer>.92&&Math.random()<sp.snag*lu.snag*dt*.8){F.st='snag';F.t=0;toast('路亞卡到底了');return}
+    F.dep=depthAt(sp,F.D,e);
+    if(F.D<=2.5)endCast('路亞收回來了');return}
+  if(s==='fight')fight(dt,e,sp);
+}
+function fight(dt,e,sp){const r=F.r,f=FISH[F.k];F.ft+=dt;
+  F.pt-=dt;if(F.pt<=0){if(F.ph==='run'){F.ph='rest';F.pt=rnd(1,2.6)}else{F.ph='run';F.pt=rnd(.9,2.8)*(.6+.4*F.St);F.dir=rnd(-1,1)}}
+  const run=F.ph==='run', pull=F.P*Math.sqrt(Math.max(F.St,.05))*(run?rnd(.72,1)*(1+.12*Math.sin(F.ft*9)):rnd(.22,.4));
+  const drag=r.reel?Math.min(S.cfg.drag,r.reel.drag):.5, L=r.limit||1;
+  if(run&&Math.random()<1.1*dt){const sh=(r.main&&r.main.mat==='pe'?1.35:r.main&&r.main.mat==='fc'?.85:.7)*(1.25-(r.rod?r.rod.act:.3))*(r.leader&&r.leader.mat==='ny'?.9:1);F.spike=F.P*.45*sh*rnd(.6,1.2)}
+  F.spike=Math.max(0,F.spike-dt*5);
+  let T;F.slip=false;
+  if(holdS&&r.reel&&r.reel.lever){T=pull*.15;F.D+=(pull/F.P+.3)*3.2*dt;F.relT+=dt}
+  else{F.relT=0;
+    if(pull>drag){F.slip=true;T=drag;F.D+=(pull-drag)/F.P*3*dt}
+    else if(holdP){T=Math.min(drag,pull+.25*F.P);const v=(r.reel?r.reel.ratio*.16:.8)*(1-.72*pull/Math.max(drag,.3));F.D-=Math.max(.12,v)*dt;if(T>=drag){F.slip=true}}
+    else{T=pull}}
+  F.T=T+F.spike;
+  F.St=clamp(F.St-dt*(.018+.065*T/F.P)*(run?1:.6)+(!holdP&&!run?.006*dt:0),0,1);
+  F.fang=clamp(F.fang+(F.dir||0)*dt*.08*(run?1:.2),-.6,.6);
+  if(F.T>L*.98)F.over+=dt;else F.over=Math.max(0,F.over-dt*2);
+  if(F.over>.12){endCast(lose(r.weak[0]));return}
+  if(sp.sr>0&&F.D<10&&run){F.rub+=dt*sp.sr*.22*(r.leader?(r.leader.mat==='fc'?.65:1)*clamp(3.5/r.leader.kg,.5,2):2.5)*(holdS?1.5:1);
+    if(F.rub>=1){endCast((sp.type==='tetra'?'魚鑽進消波塊，線被磨斷了。':'線被水道邊的石塊磨斷了。')+lose(r.leader?'leader':'main'));return}}
+  if(F.D>r.onReel-2){endCast('線被拉光了！'+lose('main'));return}
+  if(!holdP&&!holdS&&T<F.P*.15)F.slack+=dt;else F.slack=Math.max(0,F.slack-dt);
+  if(F.slack>3.5){endCast('線太鬆，魚脫鉤了');return}
+  if(F.relT>2.5&&Math.random()<.25*dt){endCast('放線太久，魚脫鉤了');return}
+  if(Math.random()<.0035*dt){endCast('魚甩掉鉤了……');return}
+  if(F.D<=1.6){
+    if(sp.type!=='sand'&&F.w>1.5&&!has('net')&&Math.random()<.45){endCast(`${f.n} 拉上堤防時掉回海裡了（大魚需要撈網）`);return}
+    catchFish()}
+}
+
+/* =========================================================
+   3D 更新
+   ========================================================= */
+const _v=()=>new THREE.Vector3();
+function splash(pos,str){if(!G.spot||!pos)return;const P=G.spot,n=P.pp.length/3;for(let i=0;i<n;i++){P.pp[i*3]=pos.x;P.pp[i*3+1]=pos.y;P.pp[i*3+2]=pos.z;const a=Math.random()*6.28,s=rnd(.5,2.2)*str;P.pv[i*3]=Math.cos(a)*s;P.pv[i*3+1]=rnd(1.5,4.5)*str;P.pv[i*3+2]=Math.sin(a)*s}P.pt=1.2;P.ring.position.set(pos.x,pos.y+.05,pos.z);P.ring.userData.t=0;P.ring.material.opacity=.8}
+function update3D(dt,t,e){
+  if(mode==='map'){const M=G.map;M.wm.uniforms.uT.value=t;M.turbs.forEach(tb=>tb.rot.rotation.z-=dt*1.6);M.beams.forEach((b,i)=>{b.b.material.opacity=.18+.12*Math.sin(t*2+i);b.ring.scale.setScalar(1+.25*Math.sin(t*2.4+i))});
+    const sel=$('#spotCard').dataset.sp;M.beams.forEach((b,i)=>b.g.scale.setScalar(SPOTS[i].id===sel?1.35:1));
+    return}
+  const P=G.spot,sp=CUR,T=THREE;if(!P)return;
+  applySky(P,e,sp);P.wm.uniforms.uT.value=t;
+  const lvl=sp.type==='sand'?(e.tide-.5)*3.6:(e.tide-.5)*sp.tr;P.water.position.y=lvl;P.far.position.y=lvl-.4;
+  P.turbs.forEach(tb=>{tb.rot.rotation.z-=dt*(.6+e.wind*.08);if(tb.light)tb.light.material.opacity=(e.L<.5?1:0)*(Math.sin(t*2+tb.ph)>.2?1:.15)});
+  // 角色位置
+  const H=P.H;let pz=0,ph=H;if(sp.type==='sand'){P.sandZ=lerp(P.sandZ??((lvl-1)/.055+4),clamp((lvl-1)/.055+4,-150,30),F.st==='idle'?dt*.5:0);pz=P.sandZ;ph=1+pz*.055}
+  P.player.position.set(PX,ph+(walkDir&&F.st==='idle'?Math.abs(Math.sin(t*9))*.05:0),pz);P.player.rotation.y=yaw;
+  const base=P.player.position, fd=fwd(F.st==='idle'||F.st==='charge'?yaw:(F.yaw??yaw)), rt={x:-fd.z,z:fd.x};
+  // 釣竿動作
+  const rod=P.rod;let ang=-.95,bend=.015;
+  if(F.st==='charge'){ang=lerp(-.95,.55,Math.min(1,chargeT*3))}
+  else if(F.st==='cast'){const c=F.t;ang=c<.12?lerp(.55,.75,c/.12):c<.3?lerp(.75,-1.35,(c-.12)/.18):lerp(-1.35,-.95,Math.min(1,(c-.3)/.3))}
+  else if(F.st==='fight'){ang=-.55-.25*Math.min(1,F.T/(F.r.limit||1));bend=.03+.11*Math.min(1.2,F.T/(F.r.limit||1))}
+  else if(F.st==='retrieve'||F.st==='lurehit'){ang=-.85+(holdP?.08*Math.sin(t*14):0)}
+  else if(F.st==='bite'||F.st==='nibble')ang=-.9;
+  if(F.mendT>0)ang+=.18*Math.sin(F.mendT/.35*Math.PI);
+  rod.root.rotation.x=lerp(rod.root.rotation.x,ang,F.st==='cast'?1:Math.min(1,dt*10));
+  rod.segs.forEach((s,i)=>s.rotation.x=-bend*Math.pow((i+1)/rod.segs.length,1.6)*3);
+  P.player.updateMatrixWorld(true);const tip=rod.tip.getWorldPosition(_v());
+  // 浮標位置
+  const fl=P.float,line=P.line,pos=line.geometry.attributes.position;let end=null;fl.visible=false;P.fish.visible=false;
+  if(F.st==='cast'){const rel=.2;if(F.t>rel){const k=Math.min(1,(F.t-rel)/F.ft),tgt=_v().set(base.x+fd.x*F.d,lvl,base.z+fd.z*F.d);
+      if(!F.start)F.start=tip.clone();const p=F.start.clone().lerp(tgt,k);p.y=lerp(F.start.y,lvl,k)+Math.sin(k*Math.PI)*Math.max(4,F.d*.32);fl.position.copy(p);fl.visible=true;end=p;
+      if(k>=1){F.pos=tgt.clone();landed()}}
+    else{F.start=null}}
+  else if(['sink','wait','nibble','bite','snag','retrieve','lurehit'].includes(F.st)){
+    const dist=F.st==='retrieve'||F.st==='lurehit'?F.D:F.d;const x=base.x+fd.x*dist+rt.x*(F.lat||0),z=base.z+fd.z*dist+rt.z*(F.lat||0);
+    let y=lvl+waveH(x,z,t,P.wm.uniforms.uAmp.value),dip=F.fy||0,side=F.fs||0,tilt=F.ftl||0;
+    if(F.st==='retrieve'||F.st==='lurehit'){y=lvl-.3-F.layer*1.2;fl.visible=F.layer<.15}else fl.visible=true;
+    const amp=P.wm.uniforms.uAmp.value;fl.position.set(x+rt.x*side,y+dip,z+rt.z*side);fl.rotation.set(Math.sin(t*1.3+x)*.12*amp,0,tilt+Math.cos(t*1.1+z)*.1*amp);end=fl.position.clone();
+    const ud=fl.userData;if(ud.glow){ud.glow.material.opacity=e.dark?1:.18;ud.glow.scale.setScalar((e.dark?1.25:.45)*(1+.07*Math.sin(t*5)))}
+    if(ud.led)ud.led.material.color.set(FT[(eqI('float')||{}).ty]?.led||'#fff').multiplyScalar(e.dark?1:.75);
+    if(ud.mats){const k=e.dark?(ud.glow?.12:has('lamp')?.55:.04):0;ud.mats.forEach(m=>m.emissive.copy(m.color).multiplyScalar(k))}
+    F.pos=fl.position.clone();}
+  else if(F.st==='fight'){const a=(F.yaw??yaw)+F.fang,d2=fwd(a),x=base.x+d2.x*F.D,z=base.z+d2.z*F.D;
+    const y=lvl-(F.D>6?.8:.05)+(F.ph==='run'&&F.D<14?Math.abs(Math.sin(t*6))*.25:0);end=_v().set(x,y,z);
+    if(F.D<8){P.fish.visible=true;P.fb.material.color.set(FISH[F.k].col);P.fish.position.set(x,lvl-.1+Math.sin(t*9)*.08,z);P.fish.scale.setScalar(.45+Math.cbrt(F.w)*.55);P.fish.rotation.y=a+Math.PI/2+Math.sin(t*12)*.25}
+    if(F.ph==='run'&&Math.random()<dt*2.5&&F.D<20)splash(end,.5)}
+  if(end){line.visible=true;const n=pos.count,dd=Math.max(1,tip.distanceTo(end)),wet=['sink','wait','nibble','bite','snag'].includes(F.st),sl=wet?(F.slk||0):0,ws=e.monsoon?-1:1;
+    const sag=F.st==='fight'?Math.max(0,1-F.T/(F.r.limit||1))*.04:.035+sl*.012, bow=F.st==='fight'?0:ws*(e.wind*.004+sl*.05)/(1+dd*.01);
+    for(let i=0;i<n;i++){const k=i/(n-1),sk=Math.sin(k*Math.PI),p=tip.clone().lerp(end,k);p.y-=sk*dd*sag;const bw=Math.pow(sk,.8)*dd*bow*(.6+.4*k)+(wet?Math.sin(t*2+k*6)*.04*e.wind*sk:0);p.x+=rt.x*bw;p.z+=rt.z*bw;if(wet&&k>.35)p.y=Math.max(p.y,lvl+.03);pos.setXYZ(i,p.x,p.y,p.z)}pos.needsUpdate=true}
+  else line.visible=false;
+  // 瞄準圈
+  const show=F.st==='idle'||F.st==='charge',r0=show?(F.r||null):null;P.aim.visible=show;
+  if(show){const mc=(F.st==='charge'?F.r.maxCast*power:(rigCache.maxCast||30)*.65),d=Math.max(6,Math.min(mc,sp.type==='canal'?sp.wide-8:999));const x=base.x+fd.x*d,z=base.z+fd.z*d;P.aim.position.set(x,lvl+.15+waveH(x,z,t,P.wm.uniforms.uAmp.value),z);P.aim.scale.setScalar(1+d*.02+.08*Math.sin(t*4))}
+  // 水花
+  if(P.pt>0){P.pt-=dt;const a=P.spl.geometry.attributes.position;for(let i=0;i<a.count;i++){P.pv[i*3+1]-=9.8*dt;P.pp[i*3]+=P.pv[i*3]*dt;P.pp[i*3+1]+=P.pv[i*3+1]*dt;P.pp[i*3+2]+=P.pv[i*3+2]*dt;a.setXYZ(i,P.pp[i*3],P.pp[i*3+1],P.pp[i*3+2])}a.needsUpdate=true;P.spl.visible=true;P.spl.material.opacity=Math.min(1,P.pt)}else P.spl.visible=false;
+  if(P.ring.userData.t!=null){P.ring.userData.t+=dt;const k=P.ring.userData.t;P.ring.scale.setScalar(1+k*4);P.ring.material.opacity=Math.max(0,.8-k*.6)}
+  if(F.st==='nibble'&&F.nt<dt*1.5&&F.pos)splash(F.pos,.15);
+  // 撒餌
+  P.caim.visible=CM.on;if(CM.on){const rg=S.bucket?S.bucket.p.range:12,d=Math.max(3,rg*(CM.ch?CM.pow:.6)),cx=PX-Math.sin(cyaw)*d,cz=base.z-Math.cos(cyaw)*d;P.caim.position.set(cx,lvl+.14+waveH(cx,cz,t,P.wm.uniforms.uAmp.value),cz);P.caim.scale.setScalar(1+.1*Math.sin(t*5))}
+  P.czm.forEach((m,i)=>{const z=CZ[i];if(!z||z.fly>0){m.visible=false;return}m.visible=true;const r=z.p.rad+z.t*.04;m.scale.setScalar(r);m.position.set(z.x,lvl+.05,base.z-z.y);m.material.opacity=.42*Math.sqrt(Math.max(0,1-z.t/z.p.dur))*(1-z.layer*.55)});
+  {const fz=CZ.find(z=>z.fly>0);P.scoop.visible=!!fz;if(fz){const k=Math.min(1,fz.ft/fz.fly),st=_v().set(base.x+.4,base.y+1.5,base.z-.4),tg=_v().set(fz.x,lvl,base.z-fz.y),p=st.lerp(tg,k);p.y+=Math.sin(k*Math.PI)*Math.max(2,fz.y*.3);P.scoop.position.copy(p)}}
+  if(CM.on&&F.st==='idle'){P.player.rotation.y=cyaw}
+  // 其他釣友
+  updateOthers(base,lvl,t);
+  // 鏡頭
+  const portrait=innerHeight>innerWidth, off=portrait?{s:1.25,u:3.1,b:6.6}:{s:1.6,u:2.5,b:5.2};
+  const ca=yaw,cf=fwd(ca),cr={x:-cf.z,z:cf.x};
+  const want=_v().set(base.x+cr.x*off.s-cf.x*off.b,base.y+off.u,base.z+cr.z*off.s-cf.z*off.b);
+  let look=_v().set(base.x+cf.x*32,lvl-1,base.z+cf.z*32);
+  if(F.st==='fight'&&end)look.lerp(end,.55);if((F.st==='wait'||F.st==='bite'||F.st==='nibble')&&end)look.lerp(end,.35);
+  if(!P.camInit){P.camPos.copy(want);P.camLook.copy(look);P.camInit=1}
+  P.camPos.lerp(want,Math.min(1,dt*4));P.camLook.lerp(look,Math.min(1,dt*3));
+  P.cam.position.copy(P.camPos);if(P.shake>0){P.shake-=dt;P.cam.position.x+=rnd(-.08,.08)*P.shake*4;P.cam.position.y+=rnd(-.08,.08)*P.shake*4}
+  P.cam.fov=portrait?64:55;P.cam.updateProjectionMatrix();P.cam.lookAt(P.camLook);P.sky.position.copy(P.cam.position);
+}
+const ST_N={idle:'準備中',charge:'蓄力中',cast:'拋竿',sink:'等魚訊',wait:'等魚訊',nibble:'等魚訊',bite:'有口！',snag:'掛底了',retrieve:'拖路亞',lurehit:'有口！',fight:'搏魚中'};
+const nm=pr=>String((pr&&pr.n)||'釣友').slice(0,12);
+const tagHTML=(name,st,me,say)=>`${say?`<span class="bub">${esc(say)}</span>`:''}<span class="nm">${me?'你・':''}${esc(name)}${st?`<i>${esc(st)}</i>`:''}</span>`;
+function updateOthers(base,lvl,t){const P=G.spot;if(!P)return;
+  const ps=room?room.peers().filter(p=>!p.isMe&&p.kind==='viewer'&&p.presence&&p.presence.sp===CUR.id).sort((a,b)=>a.peer<b.peer?-1:1).slice(0,8):[], seen={};
+  ps.forEach((p,i)=>{const id=p.peer;seen[id]=1;let o=P.oth[id];
+    if(!o){const g=makePlayerMesh(),rod=makeRod(5.3,false);rod.root.position.set(.24,1.28,-.42);rod.root.rotation.x=-.95;g.add(rod.root);const b=makeFloatMesh('abo');P.others.add(g);P.sc.add(b);
+      const lab=document.createElement('div');lab.className='ptag';$('#labels').appendChild(lab);o=P.oth[id]={g,b,lab,rod,h:''}}
+    const slot=(Math.floor(i/2)+1)*5.5*(i%2?1:-1),pr=p.presence,a=+pr.yaw||0,st=String(pr.st||'idle'),fight=st==='fight';
+    let ox=typeof pr.px==='number'?pr.px:slot;if(Math.abs(ox-PX)<1.3)ox=PX+(ox>=PX?1.3:-1.3);o.g.position.set(ox,base.y,base.z+.2);o.g.rotation.y=a;
+    o.rod.root.rotation.x=fight?-.6+Math.sin(t*3)*.08:-.95;o.rod.segs.forEach((sg,k)=>sg.rotation.x=fight?-.14*Math.pow((k+1)/10,1.6)*3:-.015*Math.pow((k+1)/10,1.6)*3);
+    const d=+pr.d||0,ff=fwd(a),wet=d>0&&['sink','wait','nibble','bite','snag'].includes(st),bx=ox+ff.x*d,bz=base.z+ff.z*d;
+    o.b.visible=wet;o.b.position.set(bx,lvl+waveH(bx,bz,t,P.wm.uniforms.uAmp.value)+(st==='bite'?-.6:0),bz);
+    if(fight&&Math.random()<.02)splash(_v().set(bx,lvl,bz),.4);
+    const say=sayLocal[id]&&Date.now()-sayLocal[id].at<7000?sayLocal[id].t:'', h=nm(pr)+'|'+st+'|'+say;
+    if(h!==o.h){o.h=h;o.lab.innerHTML=tagHTML(nm(pr),ST_N[st]||'',false,say);o.lab.classList.toggle('fight',fight)}
+    o.wp=o.g.position.clone().add(new THREE.Vector3(0,2.2,0))});
+  for(const id in P.oth)if(!seen[id]){P.others.remove(P.oth[id].g);P.sc.remove(P.oth[id].b);P.oth[id].lab.remove();delete P.oth[id]}
+  if(P.me){const say=MY_SAY.t&&Date.now()-MY_SAY.at<7000?MY_SAY.t:'',h=S.name+'|'+say+'|'+F.st;if(h!==P.me.h){P.me.h=h;P.me.lab.innerHTML=tagHTML(S.name,room?ST_N[F.st]||'':'',true,say);P.me.lab.classList.toggle('fight',F.st==='fight')}P.me.wp=base.clone().add(new THREE.Vector3(0,2.2,0))}
+}
+/* 聊天與在線名單 */
+let MY_SAY={t:'',at:0};const CHAT=[],sayLocal={},seenSay={},seenSpot={};
+function chatHTML(){return CHAT.length?CHAT.slice().reverse().map(c=>`<div class="it"><div><h4 style="font-size:13px">${c.me?'你':esc(c.n)}<small>${new Date(c.at).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</small></h4><p style="color:var(--fg)">${esc(c.t)}</p></div></div>`).join(''):'<div class="empty">還沒有人說話。</div>'}
+function addChat(n,t,me){CHAT.push({n,t,me,at:Date.now()});if(CHAT.length>40)CHAT.shift();if(!me)feed(`${n}：${t}`);const cl=$('#chatLog');if(cl)cl.innerHTML=chatHTML()}
+function say(t){t=String(t||'').trim().slice(0,40);if(!t)return;if(!room){toast('目前是單人模式，沒有人聽得到');return}MY_SAY={t,at:Date.now()};addChat(S.name,t,true);sendPresence(true);toast('已喊話',900)}
+function pollPeers(){if(!room)return;for(const p of room.peers()){if(p.isMe||p.kind!=='viewer'||!p.presence)continue;const pr=p.presence,id=p.peer;
+  if(seenSay[id]===undefined)seenSay[id]=pr.sayT||0;else if(pr.sayT&&pr.say&&seenSay[id]!==pr.sayT){seenSay[id]=pr.sayT;const t=String(pr.say).slice(0,40);sayLocal[id]={t,at:Date.now()};addChat(nm(pr),t,false)}
+  const sp=pr.sp||null;if(seenSpot[id]===undefined)seenSpot[id]=sp;else if(seenSpot[id]!==sp){seenSpot[id]=sp;if(CUR&&sp===CUR.id)feed(`${nm(pr)} 來到${CUR.n}`)}}}
+function friendRows(){if(!room)return '';const ps=room.peers().filter(p=>p.kind==='viewer'&&p.presence).sort((a,b)=>(b.isMe?1:0)-(a.isMe?1:0));
+  return `<div class="gh">在線釣友 ${ps.length}</div>`+(ps.map(p=>{const pr=p.presence,sp=pr.sp?spotById(pr.sp):null,st=ST_N[pr.st]||'';
+    const act=p.isMe?'':sp?(CUR&&CUR.id===sp.id?'<span class="owned">同一釣位</span>':`<button class="buy" data-join="${sp.id}" data-px="${typeof pr.px==='number'?pr.px:0}">去找他</button>`):'';
+    return `<div class="it"><div><h4>${p.isMe?'你・':''}${esc(nm(pr))}</h4><p>${sp?`${esc(sp.n)}・${esc(st)}`:'在地圖上'}</p></div>${act}</div>`}).join('')||'<div class="empty">目前只有你一個人。</div>')}
+function friendsView(){
+  const me=`<div class="name"><input id="nameIn" maxlength="12" value="${esc(S.name)}" aria-label="暱稱"><button class="ghost" data-rename>改暱稱</button></div>`;
+  if(!room)return me+`<div class="msgs"><div class="w">目前是單人模式，沒有連上多人房間。朋友要能打開這個頁面並登入 claude.ai，才會出現在這裡。</div></div>`;
+  const quick=['有魚嗎？','中魚了！','這裡沒口','換餌試試','漲潮了，口變好','要不要換釣點？','加油！','先收工了'];
+  return me+`<div id="friendRows">${friendRows()}</div><div class="gh">喊話（會出現在你頭上）</div><div class="sizes">${quick.map(q=>`<button data-say="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+    <div class="name"><input id="sayIn" maxlength="40" placeholder="輸入想說的話" aria-label="喊話內容"><button class="ghost" data-saytxt>送出</button></div><div class="gh">對話</div><div id="chatLog">${chatHTML()}</div>`}
+let joinPX=null;
+function joinSpot(id,px){if(F.st==='fight')return toast('搏魚中不能離開');closeSheet();if(mode==='spot'&&CUR&&CUR.id===id){PX=clamp(px+3,-60,60);return}if(mode==='spot')exitSpot();joinPX=px+3;enterSpot(id)}
+
+/* =========================================================
+   水下釣組視窗（2D）
+   ========================================================= */
+function drawUW(e){const c=$('#uw');if(!c||$('#uwWrap').hidden||$('#uwWrap').classList.contains('min'))return;
+  const dpr=Math.min(2,window.devicePixelRatio||1),W=Math.round(c.clientWidth*dpr),H=Math.round(c.clientHeight*dpr);if(!W||!H)return;if(c.width!==W||c.height!==H){c.width=W;c.height=H}
+  const x=c.getContext('2d'),sp=CUR,r=rigCache,u=W/132;x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,W,H);
+  const inWater=['sink','wait','nibble','bite','snag','fight','retrieve','lurehit'].includes(F.st);
+  const d=inWater?(F.st==='fight'||F.st==='retrieve'||F.st==='lurehit'?F.D:F.d):Math.max(6,(r.maxCast||30)*(F.st==='charge'?power:.65));
+  const dep=depthAt(sp,d,e), tana=r.lure?0:(r.stopper?S.cfg.tana:dep), maxD=Math.max(dep,tana)+1.2, top=H*.2, ppm=(H-top-8*u)/maxD;
+  const sky=x.createLinearGradient(0,0,0,top);sky.addColorStop(0,e.L>.4?'#4d86b5':'#0b1a33');sky.addColorStop(1,e.L>.4?'#9cc4dc':'#1b2c48');x.fillStyle=sky;x.fillRect(0,0,W,top);
+  const wg=x.createLinearGradient(0,top,0,H);wg.addColorStop(0,sp.type==='canal'?'#2f5a4c':'#245a63');wg.addColorStop(1,'#061a24');x.fillStyle=wg;x.fillRect(0,top,W,H-top);
+  const t=performance.now()/1000;x.strokeStyle='rgba(220,240,245,.75)';x.lineWidth=1.5*u;x.beginPath();for(let i=0;i<=W;i+=4*u){const yy=top+Math.sin(i/(14*u)+t*2)*1.6*u;i?x.lineTo(i,yy):x.moveTo(i,yy)}x.stroke();
+  // 海底
+  const by=top+dep*ppm;x.fillStyle=sp.bot.startsWith('消波')?'#4b4f50':sp.bot==='沙底'?'#8f7e5a':'#4d4433';x.beginPath();x.moveTo(0,H);for(let i=0;i<=W;i+=6*u){x.lineTo(i,by+Math.sin(i*.31)*1.5*u+(sp.bot.startsWith('消波')?Math.abs(Math.sin(i*.09))*6*u:0))}x.lineTo(W,H);x.fill();
+  if(sp.bot.startsWith('消波')){x.fillStyle='#6f7270';for(let i=8;i<W;i+=26*u){x.beginPath();x.moveTo(i,by+2*u);x.lineTo(i+7*u,by-6*u);x.lineTo(i+14*u,by+2*u);x.fill()}}
+  // 刻度
+  x.fillStyle='rgba(200,225,235,.7)';x.font=`${9*u}px Chakra Petch, monospace`;x.textAlign='left';const stp=maxD>8?2:1;for(let m=stp;m<maxD;m+=stp){const yy=top+m*ppm;x.fillRect(0,yy,4*u,1*u);x.fillText(m+'m',6*u,yy+3*u)}
+  const fx=W*.6;
+  if(r.lure||F.lure){const ly=top+(inWater?F.layer||0:.3)*dep*ppm;x.strokeStyle='rgba(240,250,252,.8)';x.lineWidth=1*u;x.beginPath();x.moveTo(W,top-6*u);x.lineTo(fx,ly);x.stroke();x.fillStyle='#7fd0ef';x.beginPath();x.ellipse(fx,ly,8*u,3*u,0,0,6.3);x.fill();
+    x.fillStyle='#fff';x.textAlign='right';x.fillText(`泳層 ${Math.round((inWater?F.layer||0:.3)*100)}%`,W-4*u,H-6*u)}
+  else{
+    const dip=inWater?-(F.fy||0)*13*u:0, sideX=inWater?(F.fs||0)*4*u:0;
+    const lying=F.lying&&inWater, eff=Math.min(tana,dep), hy=top+eff*ppm, sy=top+Math.max(.2,eff-Math.min(S.cfg.ll,eff))*ppm, fy=top+dip;
+    x.strokeStyle='rgba(240,250,252,.85)';x.lineWidth=1*u;x.beginPath();x.moveTo(W,0);x.quadraticCurveTo(W*.85-(inWater?(F.slk||0)*5*u:0),top*.4+(inWater?(F.slk||0)*2*u:0),fx+sideX,fy);x.stroke();
+    x.strokeStyle='rgba(159,210,234,.9)';x.beginPath();x.moveTo(fx,fy);if(lying){x.lineTo(fx-8*u,by-2*u)}else x.lineTo(fx,sy);x.stroke();
+    x.strokeStyle='rgba(123,227,162,.95)';x.beginPath();const hx=lying?fx-26*u:fx,hy2=lying?by-2*u:hy;x.moveTo(lying?fx-8*u:fx,lying?by-2*u:sy);x.lineTo(hx,hy2);x.stroke();
+    const fl=r.float,ty=fl?fl.ty:'abo';x.save();x.translate(fx+sideX,fy);x.rotate(inWater?-(F.ftl||0)*.85:0);
+    const ledC=FT[ty]&&FT[ty].led, glow=(yy,c)=>{if(!e.dark)return;const gr=x.createRadialGradient(0,yy,0,0,yy,10*u);gr.addColorStop(0,c);gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.beginPath();x.arc(0,yy,10*u,0,6.3);x.fill()};
+    if(e.dark&&!ledC){x.globalAlpha=has('lamp')?.85:.25}
+    if(ty==='abo'||ty==='eabo'){x.fillStyle='#ff4b2b';x.beginPath();x.arc(0,0,6*u,0,6.3);x.fill();x.fillStyle='#111';x.fillRect(-6*u,-.8*u,12*u,1.6*u);if(ty==='abo'){x.fillStyle='#ffd34a';x.beginPath();x.arc(0,-6*u,2*u,0,6.3);x.fill()}else{glow(-8*u,ledC);x.fillStyle=ledC;x.beginPath();x.arc(0,-8*u,2.2*u,0,6.3);x.fill()}}
+    else if(ty==='cone'){x.fillStyle='#ff5a2b';x.beginPath();x.moveTo(-6*u,-3*u);x.lineTo(6*u,-3*u);x.lineTo(0,9*u);x.fill();x.fillStyle='#ffd34a';x.fillRect(-6*u,-5*u,12*u,2*u)}
+    else if(ty==='long'){x.fillStyle='#ff7b2e';x.fillRect(-2.5*u,0,5*u,10*u);['#111','#ffd34a','#ff2d20'].forEach((cc,i)=>{x.fillStyle=cc;x.fillRect(-1.2*u,-(i+1)*5*u,2.4*u,5*u)})}
+    else if(ty==='short'){x.fillStyle='#ff4b2b';x.fillRect(-3.5*u,-1*u,7*u,9*u);x.fillStyle='#ff9a1f';x.fillRect(-1.5*u,-8*u,3*u,7*u)}
+    else{x.fillStyle='#ff4b2b';x.fillRect(-3*u,0,6*u,9*u);glow(-6*u,ledC);x.fillStyle=ledC;x.fillRect(-1.2*u,-10*u,2.4*u,9*u)}
+    x.globalAlpha=1;x.restore();
+    if(!lying){x.fillStyle='#9aa3a8';const sk=r.sinks||[];sk.forEach((s,i)=>{x.beginPath();x.arc(fx+(i-1)*3*u,sy+i*3*u,Math.max(1.6,1.4+Math.sqrt(s.g)*1.3)*u,0,6.3);x.fill()})}
+    x.strokeStyle='#d8dde2';x.lineWidth=1.3*u;x.beginPath();x.arc(hx-2.5*u,hy2+2*u,3*u,0,Math.PI);x.stroke();
+    if(!inWater||F.baitOn!==false){x.fillStyle=r.bait&&r.bait.cat==='bait'?'#ff8f8a':'#7fd0ef';x.beginPath();x.ellipse(hx-2.5*u,hy2+4*u,3.2*u,2*u,0,0,6.3);x.fill()}
+    // 標註
+    x.fillStyle='#fff';x.textAlign='right';x.font=`600 ${9*u}px Chakra Petch, monospace`;x.fillText(`棚 ${f1(r.stopper?S.cfg.tana:dep)}m`,W-4*u,top+12*u);x.fillStyle='rgba(255,255,255,.75)';x.fillText(`水深 ${f1(dep)}m`,W-4*u,H-6*u);
+    if(lying){x.fillStyle='#ffd04a';x.fillText('躺標・鉛在底',W-4*u,top+24*u)}
+    // 魚影
+    if(S.assist&&(F.st==='nibble'||F.st==='bite')){const k=F.st==='bite'?Math.min(1,F.bt*2):.5,fx2=lerp(8*u,hx-10*u,k),fy2=hy2+4*u,sz=(F.st==='bite'?1+Math.cbrt(FISH[F.k].w[1])*.4:.7)*u;
+      x.fillStyle='rgba(10,20,25,.75)';x.beginPath();x.ellipse(fx2,fy2,11*sz,4*sz,0,0,6.3);x.fill();x.beginPath();x.moveTo(fx2-10*sz,fy2);x.lineTo(fx2-16*sz,fy2-5*sz);x.lineTo(fx2-16*sz,fy2+5*sz);x.fill()}
+  }
+  if(inWater&&CZ.length){const bp=baitXY(),C=chumAt(bp.x,bp.y,F.layer||0);
+    CZ.forEach((z,zi)=>{if(z.fly>0)return;const r=z.p.rad+z.t*.04,h=Math.exp(-((bp.x-z.x)**2+(bp.y-z.y)**2)/(2*r*r)),life=Math.sqrt(Math.max(0,1-z.t/z.p.dur));if(h*life<.05)return;
+      const cy=top+z.layer*dep*ppm;x.fillStyle=`rgba(190,130,70,${(.55*h*life).toFixed(2)})`;for(let i=0;i<34;i++){const a=hash(zi*97+i)*6.28,rr=hash(zi*31+i*7)*24*u;x.beginPath();x.arc(W*.6+Math.cos(a)*rr*1.4,cy+Math.sin(a)*rr*.5,(1+hash(i*3+zi))*1.2*u,0,6.3);x.fill()}});
+    if(C.m>1.05){x.fillStyle='#ffc977';x.textAlign='left';x.font=`600 ${9*u}px Chakra Petch, monospace`;x.fillText(`撒餌 ×${f1(C.m)}`,6*u,top+12*u)}}
+  if(F.st==='fight'){x.fillStyle='rgba(10,20,25,.8)';const fy3=top+Math.min(dep*.8,2+Math.sin(t*3))*ppm,fx3=W*.35+Math.sin(t*2.2)*10*u,sz=(1+Math.cbrt(F.w)*.5)*u;x.beginPath();x.ellipse(fx3,fy3,12*sz,4.5*sz,0,0,6.3);x.fill();x.beginPath();x.moveTo(fx3-11*sz,fy3);x.lineTo(fx3-18*sz,fy3-6*sz);x.lineTo(fx3-18*sz,fy3+6*sz);x.fill();
+    x.strokeStyle='rgba(240,250,252,.9)';x.lineWidth=1*u;x.beginPath();x.moveTo(W,0);x.lineTo(fx3+11*sz,fy3);x.stroke();x.fillStyle='#ffb447';x.textAlign='left';x.fillText(`距離 ${f1(F.D)}m`,6*u,H-6*u)}
+  if(!inWater){x.fillStyle='rgba(255,255,255,.8)';x.textAlign='left';x.font=`600 ${9*u}px Chakra Petch, monospace`;x.fillText(`預估 ${Math.round(d)}m 處`,6*u,top-6*u)}
+}
+
+/* =========================================================
+   HUD
+   ========================================================= */
+let rigCache=rig(), hudT=0;
+const ST_TXT={idle:'',charge:'',cast:'',sink:'餌下沉中……',wait:'盯著浮標，等真正的魚訊',nibble:'浮標在點……還不是時候',bite:'',snag:'掛底了：按住硬拉，或剪線',retrieve:'按住收線拖動路亞；放開讓它下沉',lurehit:'',fight:''};
+function hud(e,force){
+  const now=performance.now();if(!force&&now-hudT<120)return;hudT=now;rigCache=rig();
+  $('#cMoney').textContent='$'+S.m.toLocaleString();
+  $('#cTime').textContent=`${String(Math.floor(e.gh)).padStart(2,'0')}:${String(Math.floor(e.gh%1*60)).padStart(2,'0')}${e.night?' 夜':e.dusk?' 晨昏':''}`;
+  $('#cTide').textContent=`${e.rise?'漲潮':'退潮'} ${(e.lvl*3.6>=0?'+':'')+f1(e.lvl*3.6)}m${e.flow<.25?'・平潮':''}`;
+  $('#cWx').textContent=`${e.wxn}・${e.wdir}風 ${e.wind}m/s`;
+  const on=room?room.peers().filter(p=>p.kind==='viewer').length:0;$('#cOn').textContent=room?`釣友在線 ${Math.max(1,on)}`:'單人模式';document.querySelectorAll('[data-on]').forEach(el=>el.textContent=room?Math.max(1,on):0);pollPeers();
+  if(sheetKind==='friends'&&now-(hud.fr||0)>1500){hud.fr=now;const fr=$('#friendRows');if(fr)fr.innerHTML=friendRows()}
+  $('#nFish1').textContent=$('#nFish2').textContent=S.fish.length;$('#nChum').textContent=S.bucket?S.bucket.n:0;
+  if(mode==='map'){if(room){const names={};room.peers().forEach(p=>{if(p.kind==='viewer'&&p.presence&&p.presence.sp)(names[p.presence.sp]=names[p.presence.sp]||[]).push(p.isMe?'你':nm(p.presence))});document.querySelectorAll('[data-c]').forEach(el=>el.textContent=(names[el.dataset.c]||[]).length);document.querySelectorAll('[data-w]').forEach(el=>{const a=names[el.dataset.w]||[];const t=a.length?a.slice(0,3).join('、')+(a.length>3?` 等 ${a.length} 人`:''):'';if(el.textContent!==t)el.textContent=t})}
+    const card=$('#spotCard');if(!card.hidden&&card.dataset.sp)fillSpotCard(card.dataset.sp,true);return}
+  const sp=CUR,r=rigCache;
+  const d=F.st==='fight'||F.st==='retrieve'?F.D:F.d;
+  $('#wName').textContent=sp.n;$('#wInfo').textContent=`${S.assist?'':'自力模式・'}${sp.bot}・堤上 ${PX>=0?'東':'西'}${Math.abs(Math.round(PX))}m・${F.dep?`拋 ${Math.round(d)}m 水深 ${f1(F.dep)}m`:`最遠 ${r.maxCast||0}m`}・母線 ${r.onReel}m${F.cm>1.05?`・撒餌效果 ×${f1(F.cm)}`:''}`;
+  // 主按鈕
+  const bP=$('#bP'),bS=$('#bS');let pt='拋竿',ps='按住蓄力，放開拋出',hot=false,st=CM.on?'收起杓子':'撒餌',ss=S.bucket?`桶裡 ${S.bucket.n} 杓`:'先調配誘餌桶',sd=false;
+  const s=F.st;
+  if(s==='charge'){pt='放開拋出';ps=`約 ${Math.round(F.r.maxCast*power)}m`}
+  else if(s==='cast'){pt='拋投中';ps=''}
+  else if(['sink','wait','nibble','bite'].includes(s)){const ready=s==='bite'&&F.bt>=BITE_K[FISH[F.k].bite].ws;
+    const A=S.assist;pt=A&&ready?'揚竿！':'揚竿';ps=!A?'看準浮標再按':s==='bite'?(ready?BITE_N[FISH[F.k].bite]:BITE_N[FISH[F.k].bite]+'…再等一下'):s==='sink'?'餌還在下沉':'等浮標沉下去再按';hot=A&&ready;st='收竿';ss='收線重拋';sd=false;
+    if(A&&ready&&!F.called){F.called=1;callout('揚竿！',700)}}
+  else if(s==='snag'){pt='硬拉';ps='按住 1 秒';st='剪線';ss='損失子線以下';sd=false}
+  else if(s==='retrieve'){pt='收線';ps='按住拖動路亞';st='收竿';ss='';sd=false}
+  else if(s==='lurehit'){pt='揚竿！';ps='魚咬了';hot=true;st='收竿';ss='';sd=false}
+  else if(s==='fight'){pt='收線';ps='按住捲線';const lv=r.reel&&r.reel.lever;st=lv?'放線':'無手煞車';ss=lv?'按住扳手煞車':'紡車只能靠煞車出線';sd=!lv}
+  $('#bPt').textContent=pt;$('#bPs').textContent=ps;bP.classList.toggle('hot',hot);bP.classList.toggle('hold',holdP&&(s==='fight'||s==='retrieve'||s==='snag'));bP.disabled=s==='cast';
+  $('#bSt').textContent=st;$('#bSs').textContent=ss;bS.disabled=sd;bS.classList.toggle('hold',holdS&&s==='fight');
+  $('#bChum').classList.toggle('on',CM.on);
+  $('#chumP').hidden=!(CM.on&&s!=='fight');if(CM.on){const rg=S.bucket?S.bucket.p.range:12;$('#cpI').style.width=((CM.ch?CM.pow:0)*100)+'%';$('#cpV').textContent=(CM.ch?Math.round(Math.max(3,rg*CM.pow)):Math.round(rg))+' m';$('#cThrowS').textContent=S.bucket?`剩 ${S.bucket.n} 杓`:'桶空了';$('#cThrow').classList.toggle('on',CM.ch)}
+  const wet=['sink','wait','nibble','bite'].includes(s)&&!r.lure;$('#bT').hidden=!wet;$('.acts').classList.toggle('three',wet);
+  if(wet){$('#bTs').textContent=(F.slk||0)>3?'線被吹彎了！':'收掉多餘的線'}
+  $('#slkP').hidden=!wet;if(wet){const k=clamp((F.slk||0)/8,0,1);$('#slkI').style.width=(k*100)+'%';$('#slkI').style.background=k>.6?'var(--bad)':k>.3?'var(--warn)':'var(--tide)';$('#slkV').textContent=f1(F.slk||0)+' m'}
+  // 面板
+  $('#powP').hidden=s!=='charge';if(s==='charge'){$('#powI').style.width=(power*100)+'%';$('#powV').textContent=Math.round(F.r.maxCast*power)+' m'}
+  $('#figP').hidden=s!=='fight';
+  if(s==='fight'){const L=r.limit||1,T=F.T;$('#fDi').style.width=clamp((1-F.D/Math.max(F.D0,1))*100,0,100)+'%';$('#fDv').textContent=f1(F.D)+' m';
+    const ti=$('#fTi');ti.style.width=clamp(T/L*100,0,100)+'%';ti.style.background=T>L*.85?'var(--bad)':T<L*.15?'var(--warn)':'var(--tide)';$('#fTu').style.left=clamp(r.drag/L*100,0,100)+'%';$('#fTv').textContent=f1(T)+'/'+f1(L);
+    $('#fSi').style.width=(F.St*100)+'%';$('#fSv').textContent=Math.round(F.St*100)+'%'}
+  let msg=ST_TXT[s]||'';if(!S.assist&&(s==='nibble'||s==='wait'))msg='';
+  if(s==='idle')msg=r.ok?'':r.E[0][1];
+  if(s==='fight'){const L=r.limit||1;msg=holdS?'手煞車放線中，魚在往外跑':F.T>L*.85?'張力太高！放開收線，或按住放線':F.slip?'魚在衝，煞車出線中':F.ph==='rest'?'魚停下來了，快收線':'穩住，等魚衝完';if(F.D<10&&sp.sr>.5&&F.ph==='run')msg+='（小心消波塊！）'}
+  if(s==='wait'&&F.lying)msg='躺標中：棚比水深深，訊號會不清楚';
+  if((s==='wait'||s==='sink')&&!r.lure&&e.dark&&!(r.float&&FT[r.float.ty]&&FT[r.float.ty].led))msg=has('lamp')?'天暗了，靠頭燈盯浮標（電子標會更清楚）':'天太暗，浮標幾乎看不見！換電子阿波、電子浮標，或買頭燈';
+  $('#status').textContent=msg;
+  $('#aimHint').hidden=!(s==='idle'&&has3D&&G.spot&&!CM.on);$('#wL').hidden=$('#wR').hidden=s!=='idle';
+  measureDock();
+}
+
+/* =========================================================
+   模式切換、地圖卡片
+   ========================================================= */
+function fillSpotCard(id,soft){const sp=spotById(id),e=env(),card=$('#spotCard');if(!sp)return;
+  const top=Object.entries(sp.fish).map(([k,a])=>{const f=FISH[k];return[k,a*(f.sea?(f.sea.includes(e.month)?1.3:.45):1)*(e.night?f.t[1]:e.dusk?f.t[2]:f.t[0])]}).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  let cnt=0;if(room)room.peers().forEach(p=>{if(p.presence&&p.presence.sp===id)cnt++});
+  const html=`<h3>${esc(sp.n)}<small>${esc(sp.sub)}</small></h3><p>${esc(sp.desc)}</p>
+    <div class="kv"><span>底質<b>${sp.bot}</b></span><span>30m 處水深<b>${f1(depthAt(sp,30,e))}m</b></span><span>潮流<b>${e.flow>.6?'強':e.flow>.25?'中':'平潮'}</b></span><span>在這裡<b>${cnt} 人</b></span></div>
+    <div class="kv">${top.map(([k])=>`<span>${FISH[k].n}${FISH[k].sea&&FISH[k].sea.includes(e.month)?'<b>當季</b>':''}</span>`).join('')}</div>
+    <div class="row2"><button class="go" data-go="${sp.id}">進入釣位</button><button class="ghost" data-unsel>關閉</button></div>`;
+  if(soft&&card.dataset.html===String(cnt)+e.flow.toFixed(1)+sp.id)return;card.dataset.html=String(cnt)+e.flow.toFixed(1)+sp.id;card.innerHTML=html}
+function selectSpot(id){const card=$('#spotCard');card.dataset.sp=id;card.dataset.html='';fillSpotCard(id);card.hidden=false;$('#mapHint').hidden=true;
+  document.querySelectorAll('.pin').forEach(p=>p.classList.remove('on'));const pin=LBL.find(l=>l.sp===id);if(pin)pin.e.classList.add('on');
+  const sp=spotById(id);if(G.map){G.map.tx=clamp(sp.x*.6,-12,8);G.map.tz=sp.z}}
+function enterSpot(id){const sp=spotById(id);if(!sp)return;CUR=sp;mode='spot';F={st:'idle'};yaw=0;PX=typeof joinPX==='number'?clamp(joinPX,-60,60):0;joinPX=null;walkDir=0;CZ=[];CM={on:false,ch:false,pow:0,t:0};
+  let built=false;if(has3D){try{buildSpot(sp);const lab=document.createElement('div');lab.className='ptag me';$('#labels').appendChild(lab);G.spot.me={lab,h:''};built=true}catch(err){console.error('buildSpot',err);if(G.spot){try{disposeScene(G.spot.sc)}catch(_){}}G.spot=null}}
+  LBL.forEach(l=>l.e.hidden=true);
+  $('#brand').hidden=true;$('#where').hidden=false;$('#mapDock').hidden=true;$('#spotDock').hidden=false;$('#uwWrap').hidden=false;
+  if(!built){$('#fallback').hidden=false;$('#fallback').textContent=has3D?'這個釣點的 3D 場景載入失敗，仍可用下方按鈕與水下視窗繼續釣魚。':'這台裝置無法顯示 3D 畫面，仍可用下方按鈕與水下視窗釣魚。'}
+  measureDock();hud(env(),true);toast(`${sp.n}：${has3D?'左右滑動調整方向，':''}按住「拋竿」蓄力`,2600);sendPresence(true);
+}
+function exitSpot(){if(F.st==='fight'&&!confirmLeave)return;endCast();mode='map';CUR=null;
+  if(G.spot){for(const id in G.spot.oth)G.spot.oth[id].lab.remove();if(G.spot.me)G.spot.me.lab.remove();disposeScene(G.spot.sc);G.spot=null}
+  LBL.forEach(l=>l.e.hidden=false);
+  $('#brand').hidden=false;$('#where').hidden=true;$('#mapDock').hidden=false;$('#spotDock').hidden=true;$('#uwWrap').hidden=true;$('#aimHint').hidden=true;$('#fallback').hidden=true;$('#wL').hidden=$('#wR').hidden=true;walkDir=0;CZ=[];CM.on=false;$('#chumP').hidden=true;
+  hud(env(),true);sendPresence(true)}
+let confirmLeave=true;
+function measureDock(){const d=$('#spotDock');if(!d.hidden)document.documentElement.style.setProperty('--dockH',(d.offsetHeight+10)+'px')}
+
+/* =========================================================
+   輸入
+   ========================================================= */
+function pDown(e){if(e)e.preventDefault();ac();holdP=true;const s=F.st;
+  if(s==='idle')startCharge();else if(['sink','wait','nibble','bite','lurehit'].includes(s))strike();}
+function pUp(){if(!holdP)return;holdP=false;if(F.st==='charge')release()}
+function sDown(e){if(e)e.preventDefault();ac();const s=F.st;
+  if(s==='idle'){toggleChum();return}
+  if(['sink','wait','nibble','bite','retrieve','lurehit'].includes(s)){endCast('收竿了');return}
+  if(s==='snag'){endCast(lose('leader'));return}
+  if(s==='fight'){const r=F.r;if(r.reel&&r.reel.lever)holdS=true}}
+function sUp(){holdS=false}
+function useChum(){toggleChum()}
+const bP=$('#bP'),bS=$('#bS');
+bP.addEventListener('pointerdown',pDown);['pointerup','pointercancel','pointerleave'].forEach(n=>bP.addEventListener(n,pUp));
+bS.addEventListener('pointerdown',sDown);['pointerup','pointercancel','pointerleave'].forEach(n=>bS.addEventListener(n,sUp));
+[bP,bS].forEach(b=>b.addEventListener('contextmenu',e=>e.preventDefault()));
+$('#bChum').addEventListener('click',()=>{ac();toggleChum()});
+{const ct=$('#cThrow');ct.addEventListener('pointerdown',e=>{e.preventDefault();ac();if(!S.bucket){openChum();return}CM.ch=true;CM.t=0;CM.pow=0});['pointerup','pointercancel','pointerleave'].forEach(n=>ct.addEventListener(n,()=>{if(CM.ch){CM.ch=false;chumThrow(Math.max(.05,CM.pow))}}));ct.addEventListener('contextmenu',e=>e.preventDefault())}
+$('#cFloat').addEventListener('click',()=>{ac();chumToFloat()});$('#cMix').addEventListener('click',openChum);$('#cDone').addEventListener('click',()=>{CM.on=false;CM.ch=false});
+$('#bT').addEventListener('pointerdown',e=>{e.preventDefault();mend()});$('#bT').addEventListener('contextmenu',e=>e.preventDefault());
+$('#bMap').addEventListener('click',()=>{if(F.st==='fight'){toast('搏魚中不能離開');return}exitSpot()});
+$('#cSnd').addEventListener('click',()=>{S.snd=!S.snd;$('#cSnd').textContent='音效 '+(S.snd?'開':'關');save();if(S.snd){ac();sfx('click')}});
+$('#uwT').addEventListener('click',()=>{const w=$('#uwWrap');w.classList.toggle('min');$('#uwT').textContent=w.classList.contains('min')?'＋':'−'});
+document.addEventListener('click',e=>{const o=e.target.closest('[data-open]');if(o){ac();if(o.dataset.open==='gear'){gearTab='rig';gearSlot=null}openSheet(o.dataset.open)}});
+$('#mapDock').addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)enterSpot(g.dataset.go);if(e.target.closest('[data-unsel]')){$('#spotCard').hidden=true;$('#spotCard').dataset.sp='';document.querySelectorAll('.pin').forEach(p=>p.classList.remove('on'))}});
+$('#sheet').addEventListener('click',e=>{
+  if(e.target.id==='sheet'){closeSheet();return}
+  const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+  if('close' in d){closeSheet();return}
+  if(d.cat){shopCat=d.cat;shopSub=SHOP.find(c=>c.k===d.cat).subs[0][0];renderSheet();$('#sb').scrollTop=0;return}
+  if(d.sub){shopSub=d.sub;renderSheet();return}
+  if(d.buy){buy(d.buy);return}
+  if(d.sell!==undefined){const i=+d.sell,f=S.fish[i];if(f){S.m+=f.v;S.fish.splice(i,1);save();sfx('coin');renderSheet()}return}
+  if('sellall' in d){const v=S.fish.reduce((a,f)=>a+f.v,0);S.m+=v;S.fish=[];save();sfx('coin');toast(`賣了 $${v.toLocaleString()}`);renderSheet();return}
+  if(d.gtab){gearTab=d.gtab;gearSlot=null;renderSheet();return}
+  if(d.pick){gearSlot=d.pick;gearTab='inv';renderSheet();return}
+  if(d.slotsel){gearSlot=d.slotsel;renderSheet();return}
+  if('allinv' in d){gearSlot=null;renderSheet();return}
+  if(d.eq){equip(d.eq,d.slot||gearSlot||null);renderSheet();return}
+  if(d.un){if(busy())return toast('先收竿再換裝備');S.eq[d.un]=null;save();refreshRig3D();renderSheet();return}
+  if(d.step){const [k,v]=d.step.split(':');setCfg(k,S.cfg[k]+(+v));return}
+  if('rename' in d){const v=($('#nameIn').value||'').trim().slice(0,12);if(v){S.name=v;save();toast('暱稱已更新');sendPresence(true)}return}
+  if('keep' in d){if(lastCatch&&S.fish.length<capFish()){S.fish.push({k:lastCatch.k,w:lastCatch.w,L:lastCatch.L,v:lastCatch.v,sp:lastCatch.sp});save();toast('放入魚簍')}closeSheet();return}
+  if(d.mixkr){MIX.kr=clamp(MIX.kr+(+d.mixkr),0,Math.min(2,S.inv.krill_blk||0));renderSheet();return}
+  if(d.mixpw){const k=d.mixpw;if(MIX.pw.includes(k))MIX.pw=MIX.pw.filter(x=>x!==k);else if(MIX.pw.length<2)MIX.pw.push(k);else toast('最多兩種集魚粉');renderSheet();return}
+  if('mix' in d){const mp=mixProps(MIX.kr,MIX.pw);if(!mp.n)return;use('krill_blk',MIX.kr);MIX.pw.forEach(k=>use(k));S.bucket={n:mp.n,p:mp};MIX={kr:Math.min(1,S.inv.krill_blk||0),pw:[]};save();sfx('splash');toast(`攪拌好了：${mp.name}，共 ${mp.n} 杓`);renderSheet();return}
+  if('pour' in d){if(!(S.inv.chum>0))return;use('chum');const mp=mixProps(1,['pw_all']);mp.name='現成撒餌包';const n=(S.bucket&&S.bucket.p.name==='現成撒餌包'?S.bucket.n:0)+12;S.bucket={n,p:mp};save();toast('倒入現成撒餌，共 '+n+' 杓');renderSheet();return}
+  if('assist' in d){S.assist=!S.assist;save();toast(S.assist?'咬餌輔助：開':'咬餌輔助：關，全靠自己看浮標');renderSheet();return}
+  if(d.join){joinSpot(d.join,+(d.px||0));return}
+  if(d.say){say(d.say);return}
+  if('saytxt' in d){const i=$('#sayIn');say(i.value);i.value='';return}
+  if('release' in d){toast('放流了，牠游回海裡');closeSheet();return}
+});
+$('#sheet').addEventListener('keydown',e=>{if(e.target.id==='sayIn'&&e.key==='Enter'){say(e.target.value);e.target.value=''}});
+$('#sheet').addEventListener('input',e=>{const k=e.target.dataset&&e.target.dataset.rg;if(k)setCfg(k,+e.target.value,true)});
+function setCfg(k,v,live){const r=rig();const lim={tana:[.5,12],ll:[.5,5],drag:[.3,r.reel?r.reel.drag:4]}[k];if(!lim)return;
+  if(busy()&&k!=='drag')return toast('先收竿再調整棚和子線');
+  S.cfg[k]=Math.round(clamp(v,lim[0],lim[1])*100)/100;save();
+  if(live){const lab=e=>e&&e.closest('.slider')?.querySelector('.lab span');const sl=$('#rg_'+k),l=lab(sl);if(l)l.textContent=S.cfg[k]+(k==='drag'?' kg':' m');rigCache=rig();return}
+  renderSheet()}
+document.addEventListener('keydown',e=>{if($('#sheet').hidden===false){if(e.key==='Escape')closeSheet();return}if(mode!=='spot')return;
+  if(e.code==='Space'){e.preventDefault();if(!e.repeat)pDown()}
+  else if(e.key==='b'||e.key==='B'){if(!e.repeat)sDown()}
+  else if(e.key==='r'||e.key==='R'){if(!e.repeat)mend()}
+  else if(e.key==='ArrowLeft')keys.l=1;else if(e.key==='ArrowRight')keys.r=1;else if(e.key==='a'||e.key==='A')keys.wl=1;else if(e.key==='d'||e.key==='D')keys.wr=1});
+document.addEventListener('keyup',e=>{if(e.code==='Space')pUp();else if(e.key==='b'||e.key==='B')sUp();else if(e.key==='ArrowLeft')keys.l=0;else if(e.key==='ArrowRight')keys.r=0;else if(e.key==='a'||e.key==='A')keys.wl=0;else if(e.key==='d'||e.key==='D')keys.wr=0});
+[['#wL',-1],['#wR',1]].forEach(([id,dv])=>{const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();walkDir=dv;b.classList.add('on')});['pointerup','pointercancel','pointerleave'].forEach(n=>b.addEventListener(n,()=>{if(walkDir===dv)walkDir=0;b.classList.remove('on')}));b.addEventListener('contextmenu',e=>e.preventDefault())});
+const keys={};
+// 畫面拖曳：地圖平移／釣位轉向
+let drag=null;
+$('#stage').addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,moved:0};try{$('#stage').setPointerCapture(e.pointerId)}catch(_){}});
+$('#stage').addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;drag.moved+=Math.abs(dx)+Math.abs(dy);
+  if(mode==='map'&&G.map){const k=.09*G.map.zoom;G.map.tx=clamp(G.map.tx-dx*k,-30,22);G.map.tz=clamp(G.map.tz-dy*k,-60,60)}
+  else if(mode==='spot'&&CM.on){cyaw=clamp(cyaw-dx*.004,-.9,.9)}
+  else if(mode==='spot'&&(F.st==='idle'||F.st==='charge')){yaw=clamp(yaw-dx*.004,-.75,.75)}});
+$('#stage').addEventListener('pointerup',()=>{drag=null});
+$('#stage').addEventListener('wheel',e=>{if(mode==='map'&&G.map){e.preventDefault();G.map.zoom=clamp(G.map.zoom*(e.deltaY>0?1.08:.93),.55,1.5)}},{passive:false});
+
+/* =========================================================
+   多人連線
+   ========================================================= */
+let room=null,lastPres=0;
+function sendPresence(force){if(!room)return;const now=Date.now();if(!force&&now-lastPres<500)return;lastPres=now;
+  room.presence({n:S.name,sp:CUR?CUR.id:null,st:F.st,yaw:Math.round(yaw*100)/100,d:Math.round((F.st==='fight'||F.st==='retrieve'?F.D:F.d||0)*10)/10,px:Math.round(PX*10)/10,say:MY_SAY.t||null,sayT:MY_SAY.at||null}).catch(()=>{})}
+/* Firebase 轉接層：放在 GitHub 等外部網站時，用 Firebase Realtime Database 提供跟 claude.ai 相同的多人房間介面 */
+async function fbRoom(name){
+  if(!window.firebase||!window.FB_CONFIG)return null;
+  const app=firebase.apps.length?firebase.app():firebase.initializeApp(window.FB_CONFIG);
+  const cred=await firebase.auth().signInAnonymously();const myId=cred.user.uid;
+  const db=firebase.database(),base=db.ref('rooms/'+name),presRef=base.child('presence/'+myId),evRef=base.child('events');
+  await presRef.onDisconnect().remove();
+  let mine={},peersV={},lastJSON='',pending=null,lastWrite=0;const handlers={},seen=new Set();
+  base.child('presence').on('value',snap=>{peersV=snap.val()||{}});
+  const init=await evRef.limitToLast(20).once('value');init.forEach(c=>{seen.add(c.key)});
+  evRef.limitToLast(20).on('child_added',c=>{if(seen.has(c.key))return;seen.add(c.key);const v=c.val();if(!v||!v.topic)return;
+    (handlers[v.topic]||[]).forEach(h=>{try{h({topic:v.topic,data:v.data,peer:v.peer,by:null,isMe:v.peer===myId,sameTab:v.peer===myId,kind:'viewer',guest:true})}catch(e){}})});
+  const flush=()=>{pending=null;const j=JSON.stringify(mine);if(j===lastJSON)return;lastJSON=j;lastWrite=Date.now();presRef.set(Object.assign({},mine,{at:firebase.database.ServerValue.TIMESTAMP})).catch(()=>{})};
+  return{
+    peers(){const out=[];for(const id in peersV){const pr=peersV[id];if(!pr||typeof pr!=='object')continue;out.push({peer:id,by:null,isMe:id===myId,sameTab:id===myId,kind:'viewer',guest:true,presence:id===myId?mine:pr,updatedAt:pr.at||0})}
+      if(!peersV[myId])out.push({peer:myId,by:null,isMe:true,sameTab:true,kind:'viewer',guest:true,presence:mine,updatedAt:Date.now()});return out},
+    async presence(patch){for(const k in patch){if(patch[k]===null||patch[k]===undefined)delete mine[k];else mine[k]=patch[k]}
+      if(Date.now()-lastWrite>400)flush();else if(!pending)pending=setTimeout(flush,400)},
+    async emit(topic,data){const r=evRef.push();await r.set({topic,data:data??null,peer:myId,ts:firebase.database.ServerValue.TIMESTAMP});setTimeout(()=>r.remove().catch(()=>{}),30000)},
+    on(topic,h){(handlers[topic]=handlers[topic]||[]).push(h);return()=>{handlers[topic]=(handlers[topic]||[]).filter(x=>x!==h)}},
+    connected(){return true}
+  }}
+(async()=>{try{
+  if(window.claude){const r=await claude.use('room');if(r)room=await r.join('tw-iso')}
+  else if(window.firebase&&window.FB_CONFIG){try{room=await fbRoom('tw-iso')}catch(err){console.warn('Firebase',err);room=null;toast('多人連線失敗：請確認 Firebase 已啟用「匿名登入」，並貼上了資料庫規則',4500)}}
+  if(room){room.on('catch',m=>{const d=m.data;if(!m.sameTab&&d&&typeof d==='object')feed(`${String(d.n||'釣友').slice(0,12)} 在${String(d.sp||'').slice(0,8)}釣到 ${String(d.f||'').slice(0,8)} ${f2(Number(d.w)||0)}kg`)});sendPresence(true)}
+}catch(e){room=null}})();
+
+/* =========================================================
+   主迴圈
+   ========================================================= */
+function resize(){const st=$('#stage'),w=st.clientWidth,h=st.clientHeight;if(R)R.setSize(w,h,false);
+  if(G.map){G.map.cam.aspect=w/h;G.map.cam.updateProjectionMatrix()}if(G.spot){G.spot.cam.aspect=w/h;G.spot.cam.updateProjectionMatrix()}measureDock()}
+window.addEventListener('resize',resize);
+function placeLabels(cam){const w=innerWidth,h=innerHeight,v=new THREE.Vector3();
+  for(const l of LBL){if(mode!=='map'){continue}v.set(l.x,l.y,l.z).project(cam);if(v.z>1||v.x<-1.2||v.x>1.2||v.y<-1.2||v.y>1.2){l.e.style.visibility='hidden';continue}l.e.style.visibility='';l.e.style.transform=`translate(${(v.x+1)/2*w}px,${(1-v.y)/2*h}px) translate(-50%,-100%)`}
+  if(mode==='spot'&&G.spot)for(const o of Object.values(G.spot.oth).concat(G.spot.me?[G.spot.me]:[])){if(!o.wp)continue;v.copy(o.wp).project(cam);if(v.z>1||Math.abs(v.x)>1.2){o.lab.style.visibility='hidden';continue}o.lab.style.visibility='';o.lab.style.transform=`translate(${(v.x+1)/2*w}px,${(1-v.y)/2*h}px) translate(-50%,-100%)`}}
+let last=performance.now(),t0=performance.now();
+function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;const t=(now-t0)/1000,e=env();
+  if(mode==='spot'){if(keys.l&&(F.st==='idle'||F.st==='charge'))yaw=clamp(yaw+dt*.9,-.75,.75);if(keys.r&&(F.st==='idle'||F.st==='charge'))yaw=clamp(yaw-dt*.9,-.75,.75);
+    const wd=walkDir||((keys.wr?1:0)-(keys.wl?1:0));if(wd&&F.st==='idle'){const lim=CUR.type==='sand'?80:60;PX=clamp(PX+wd*2.4*dt,-lim,lim)}
+    step(dt);floatAnim(dt,t);chumTick(dt,e);if(CM.ch){CM.t+=dt;CM.pow=.5-.5*Math.cos(CM.t*Math.PI/.9)}if(holdP&&(F.st==='fight'||F.st==='retrieve')&&Math.floor(now/90)!==Math.floor((now-dt*1000)/90))sfx('click')}
+  // 浪太大的危險
+  if(mode==='spot'&&CUR&&CUR.type==='tetra'&&e.wx===4&&F.st!=='idle'){F.wv=(F.wv||0)+dt;if(F.wv>12){F.wv=0;if(Math.random()<.08){if(has('vest'))toast('大浪打上消波塊，救生衣保住了你');else if(F.r){const l=Math.round(S.m*.12);S.m-=l;lose('main');endCast(`大浪打上消波塊，你狼狽退回堤上，掉了 $${l} 和整組釣組`)}}}}
+  if(has3D){update3D(dt,t,e);
+    if(mode==='map'){const M=G.map,portrait=innerHeight>innerWidth,Hh=(portrait?165:108)*M.zoom;M.cam.position.lerp(new THREE.Vector3(M.tx,Hh,M.tz+Hh*.62),Math.min(1,dt*4));M.cam.lookAt(M.tx,0,M.tz);R.render(M.sc,M.cam);placeLabels(M.cam)}
+    else if(G.spot){R.render(G.spot.sc,G.spot.cam);placeLabels(G.spot.cam)}}
+  if(mode==='spot'){drawUW(e);sendPresence()}else sendPresence();
+  hud(e);
+  requestAnimationFrame(loop)}
+
+/* 啟動 */
+has3D=init3D();
+if(!has3D){$('#fallback').hidden=false;$('#fallback').textContent='這台裝置無法顯示 3D 地圖。仍可從下方選單逛釣具行、配釣組，並從釣點清單進入釣位。';
+  const card=$('#spotCard');card.hidden=false;card.innerHTML=`<h3>選擇釣點</h3><div class="row2" style="flex-wrap:wrap">${SPOTS.map(s=>`<button class="ghost" data-go="${s.id}">${s.n}</button>`).join('')}</div>`;$('#mapHint').hidden=true}
+$('#cSnd').textContent='音效 '+(S.snd?'開':'關');
+resize();hud(env(),true);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
