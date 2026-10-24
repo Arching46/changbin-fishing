@@ -1585,7 +1585,7 @@ async function fbRoom(name){
   const init=await evRef.limitToLast(20).once('value');init.forEach(c=>{seen.add(c.key)});
   evRef.limitToLast(20).on('child_added',c=>{if(seen.has(c.key))return;seen.add(c.key);const v=c.val();if(!v||!v.topic)return;
     (handlers[v.topic]||[]).forEach(h=>{try{h({topic:v.topic,data:v.data,peer:v.peer,by:null,isMe:v.peer===myId,sameTab:v.peer===myId,kind:'viewer',guest:true})}catch(e){}})});
-  const flush=()=>{pending=null;const j=JSON.stringify(mine);if(j===lastJSON)return;lastJSON=j;lastWrite=Date.now();
+  const flush=()=>{pending=null;if(!mine.n)return;const j=JSON.stringify(mine);if(j===lastJSON)return;lastJSON=j;lastWrite=Date.now();
     presRef.set(Object.assign({},mine,{at:firebase.database.ServerValue.TIMESTAMP})).then(()=>{window.__fbErr=''}).catch(err=>{lastJSON='';window.__fbErr=String((err&&(err.code||err.message))||err);if(!errShown){errShown=true;toast('多人資料寫入失敗：'+window.__fbErr+'（請確認資料庫規則已發布）',6000)}})};
   db.ref('.info/connected').on('value',x=>{if(x.val()===true){presRef.onDisconnect().remove();lastJSON='';flush()}});
   setInterval(()=>{lastJSON='';flush()},10000);
