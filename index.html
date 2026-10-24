@@ -1302,7 +1302,8 @@ function pollPeers(){if(!room)return;for(const p of room.peers()){if(p.isMe||p.k
 function friendRows(){if(!room)return '';const ps=room.peers().filter(p=>p.kind==='viewer'&&p.presence).sort((a,b)=>(b.isMe?1:0)-(a.isMe?1:0));
   return `<div class="gh">在線釣友 ${ps.length}</div>`+(ps.map(p=>{const pr=p.presence,sp=pr.sp?spotById(pr.sp):null,st=ST_N[pr.st]||'';
     const act=p.isMe?'':sp?(CUR&&CUR.id===sp.id?'<span class="owned">同一釣位</span>':`<button class="buy" data-join="${sp.id}" data-px="${typeof pr.px==='number'?pr.px:0}">去找他</button>`):'';
-    return `<div class="it"><div><h4>${p.isMe?'你・':''}${esc(nm(pr))}</h4><p>${sp?`${esc(sp.n)}・${esc(st)}`:'在地圖上'}</p></div>${act}</div>`}).join('')||'<div class="empty">目前只有你一個人。</div>')}
+    const age=!p.isMe&&pr.at?Math.max(0,Math.round((Date.now()-pr.at)/1000)):null;
+    return `<div class="it"><div><h4>${p.isMe?'你・':''}${esc(nm(pr))}</h4><p>${sp?`${esc(sp.n)}・${esc(st)}`:'在地圖上'}${age!=null&&age<3600?`・${age} 秒前更新`:''}</p></div>${act}</div>`}).join('')||'<div class="empty">目前只有你一個人。</div>')+(window.__fbErr?`<div class="msgs"><div class="e">連線錯誤：${esc(window.__fbErr)}</div></div>`:'')}
 function friendsView(){
   const me=`<div class="name"><input id="nameIn" maxlength="12" value="${esc(S.name)}" aria-label="暱稱"><button class="ghost" data-rename>改暱稱</button></div>`;
   if(!room)return me+`<div class="msgs"><div class="w">目前是單人模式，沒有連上多人房間。朋友要能打開這個頁面並登入 claude.ai，才會出現在這裡。</div></div>`;
@@ -1381,7 +1382,8 @@ function hud(e,force){
   if(sheetKind==='friends'&&now-(hud.fr||0)>1500){hud.fr=now;const fr=$('#friendRows');if(fr)fr.innerHTML=friendRows()}
   $('#nFish1').textContent=$('#nFish2').textContent=S.fish.length;$('#nChum').textContent=S.bucket?S.bucket.n:0;
   if(mode==='map'){if(room){const names={};room.peers().forEach(p=>{if(p.kind==='viewer'&&p.presence&&p.presence.sp)(names[p.presence.sp]=names[p.presence.sp]||[]).push(p.isMe?'你':nm(p.presence))});document.querySelectorAll('[data-c]').forEach(el=>el.textContent=(names[el.dataset.c]||[]).length);document.querySelectorAll('[data-w]').forEach(el=>{const a=names[el.dataset.w]||[];const t=a.length?a.slice(0,3).join('、')+(a.length>3?` 等 ${a.length} 人`:''):'';if(el.textContent!==t)el.textContent=t})}
-    const card=$('#spotCard');if(!card.hidden&&card.dataset.sp)fillSpotCard(card.dataset.sp,true);return}
+    const card=$('#spotCard');if(!card.hidden&&card.dataset.sp)fillSpotCard(card.dataset.sp,true);
+    if(room){const all=room.peers().filter(p=>p.kind==='viewer'&&p.presence),inSp=all.filter(p=>p.presence.sp).length;const h=$('#mapHint');if(h&&!h.hidden)h.textContent=`現在 ${all.length} 人在線：${inSp} 人在釣位、${all.length-inSp} 人在地圖上。釣點名牌上的數字是在那個釣位的人數。`}return}
   const sp=CUR,r=rigCache;
   const d=F.st==='fight'||F.st==='retrieve'?F.D:F.d;
   $('#wName').textContent=sp.n;$('#wInfo').textContent=`${S.assist?'':'自力模式・'}${sp.bot}・堤上 ${PX>=0?'東':'西'}${Math.abs(Math.round(PX))}m・${F.dep?`拋 ${Math.round(d)}m 水深 ${f1(F.dep)}m`:`最遠 ${r.maxCast||0}m`}・母線 ${r.onReel}m${F.cm>1.05?`・撒餌效果 ×${f1(F.cm)}`:''}`;
@@ -1540,15 +1542,18 @@ async function fbRoom(name){
   const app=firebase.apps.length?firebase.app():firebase.initializeApp(window.FB_CONFIG);
   const cred=await firebase.auth().signInAnonymously();const myId=cred.user.uid;
   const db=firebase.database(),base=db.ref('rooms/'+name),presRef=base.child('presence/'+myId),evRef=base.child('events');
-  await presRef.onDisconnect().remove();
-  let mine={},peersV={},lastJSON='',pending=null,lastWrite=0;const handlers={},seen=new Set();
+  let mine={},peersV={},lastJSON='',pending=null,lastWrite=0,offset=0,errShown=false;const handlers={},seen=new Set();
+  db.ref('.info/serverTimeOffset').on('value',x=>{offset=x.val()||0});
   base.child('presence').on('value',snap=>{peersV=snap.val()||{}});
   const init=await evRef.limitToLast(20).once('value');init.forEach(c=>{seen.add(c.key)});
   evRef.limitToLast(20).on('child_added',c=>{if(seen.has(c.key))return;seen.add(c.key);const v=c.val();if(!v||!v.topic)return;
     (handlers[v.topic]||[]).forEach(h=>{try{h({topic:v.topic,data:v.data,peer:v.peer,by:null,isMe:v.peer===myId,sameTab:v.peer===myId,kind:'viewer',guest:true})}catch(e){}})});
-  const flush=()=>{pending=null;const j=JSON.stringify(mine);if(j===lastJSON)return;lastJSON=j;lastWrite=Date.now();presRef.set(Object.assign({},mine,{at:firebase.database.ServerValue.TIMESTAMP})).catch(()=>{})};
+  const flush=()=>{pending=null;const j=JSON.stringify(mine);if(j===lastJSON)return;lastJSON=j;lastWrite=Date.now();
+    presRef.set(Object.assign({},mine,{at:firebase.database.ServerValue.TIMESTAMP})).then(()=>{window.__fbErr=''}).catch(err=>{lastJSON='';window.__fbErr=String((err&&(err.code||err.message))||err);if(!errShown){errShown=true;toast('多人資料寫入失敗：'+window.__fbErr+'（請確認資料庫規則已發布）',6000)}})};
+  db.ref('.info/connected').on('value',x=>{if(x.val()===true){presRef.onDisconnect().remove();lastJSON='';flush()}});
+  setInterval(()=>{lastJSON='';flush()},10000);
   return{
-    peers(){const out=[];for(const id in peersV){const pr=peersV[id];if(!pr||typeof pr!=='object')continue;out.push({peer:id,by:null,isMe:id===myId,sameTab:id===myId,kind:'viewer',guest:true,presence:id===myId?mine:pr,updatedAt:pr.at||0})}
+    peers(){const out=[],now=Date.now()+offset;for(const id in peersV){const pr=peersV[id];if(!pr||typeof pr!=='object')continue;if(id!==myId&&pr.at&&now-pr.at>35000)continue;out.push({peer:id,by:null,isMe:id===myId,sameTab:id===myId,kind:'viewer',guest:true,presence:id===myId?mine:pr,updatedAt:pr.at||0})}
       if(!peersV[myId])out.push({peer:myId,by:null,isMe:true,sameTab:true,kind:'viewer',guest:true,presence:mine,updatedAt:Date.now()});return out},
     async presence(patch){for(const k in patch){if(patch[k]===null||patch[k]===undefined)delete mine[k];else mine[k]=patch[k]}
       if(Date.now()-lastWrite>400)flush();else if(!pending)pending=setTimeout(flush,400)},
